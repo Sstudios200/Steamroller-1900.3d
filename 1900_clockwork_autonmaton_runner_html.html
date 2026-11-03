@@ -1,0 +1,3635 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>1900 Clockwork Runner - Steamroller Edition | Virtual Studios</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js and Post-Processing Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #060403;
+            font-family: 'Playfair Display', Georgia, serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-cinzel-dec { font-family: 'Cinzel Decorative', serif; }
+
+        /* Premium Victorian Steampunk Layout Styles */
+        .steampunk-card {
+            background: radial-gradient(circle at center, #2e1e13 0%, #120b06 100%);
+            border: 3px solid #d4af37;
+            box-shadow: 0 0 35px rgba(0,0,0,0.95), inset 0 0 25px rgba(212, 175, 55, 0.3);
+            position: relative;
+        }
+
+        .steampunk-card::before {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            background:
+                linear-gradient(135deg, transparent 10px, rgba(212,175,55,.34) 10px, rgba(212,175,55,.34) 11px, transparent 11px) top left,
+                linear-gradient(225deg, transparent 10px, rgba(212,175,55,.34) 10px, rgba(212,175,55,.34) 11px, transparent 11px) top right,
+                linear-gradient(45deg, transparent 10px, rgba(212,175,55,.34) 10px, rgba(212,175,55,.34) 11px, transparent 11px) bottom left,
+                linear-gradient(315deg, transparent 10px, rgba(212,175,55,.34) 10px, rgba(212,175,55,.34) 11px, transparent 11px) bottom right;
+            background-size: 24px 24px;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        .brass-button {
+            background: linear-gradient(180deg, #c79512 0%, #875c08 50%, #4f3403 100%);
+            border: 2px solid #fce8a6;
+            color: #fff4d9;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.9);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.7), inset 0 1px 3px rgba(255,255,255,0.5);
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .brass-button:hover {
+            background: linear-gradient(180deg, #e5bd38 0%, #aa7b0d 50%, #6e4b05 100%);
+            border-color: #ffffff;
+            box-shadow: 0 0 22px rgba(212, 175, 55, 0.95), inset 0 1px 5px rgba(255,255,255,0.8);
+            transform: translateY(-2px);
+        }
+
+        .brass-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        }
+
+        .brass-title {
+            background: linear-gradient(110deg, #fff0aa 8%, #d4af37 24%, #fff8cc 38%, #a8791a 52%, #ffeb9a 67%, #7e5a14 82%);
+            background-size: 220% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(1px 1px 0 rgba(92,53,4,.9)) drop-shadow(0 2px 7px rgba(0,0,0,.9));
+            animation: brassShine 7s linear infinite;
+        }
+
+        @keyframes brassShine { to { background-position: -220% 0; } }
+        .steampunk-card::after {
+            content: '❧';
+            position: absolute;
+            right: 12px;
+            bottom: 4px;
+            color: rgba(212,175,55,.38);
+            font-size: 18px;
+            pointer-events: none;
+        }
+        .gearwork-backdrop {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: .14;
+            background:
+                radial-gradient(circle at 18% 22%, transparent 0 28px, #d4af37 29px 32px, transparent 33px),
+                radial-gradient(circle at 82% 72%, transparent 0 44px, #d4af37 45px 49px, transparent 50px),
+                radial-gradient(circle at 78% 18%, transparent 0 22px, #d4af37 23px 26px, transparent 27px);
+            animation: gearDrift 24s linear infinite;
+        }
+        .gearwork-backdrop::before, .gearwork-backdrop::after {
+            content: '⚙';
+            position: absolute;
+            color: #e6bd52;
+            font-size: clamp(180px, 30vw, 430px);
+            left: 3%;
+            top: 4%;
+            animation: gearTurn 36s linear infinite;
+            text-shadow: 0 0 24px #d4af37;
+        }
+        .gearwork-backdrop::after {
+            content: '⚙';
+            left: auto;
+            top: auto;
+            right: 1%;
+            bottom: -16%;
+            font-size: clamp(140px, 23vw, 330px);
+            animation-direction: reverse;
+        }
+        @keyframes gearTurn { to { transform: rotate(360deg); } }
+        @keyframes gearDrift { 50% { transform: translate3d(0,-12px,0); } }
+        .pressure-gauge {
+            position: relative;
+            border: 1px solid rgba(255,224,153,.65);
+            box-shadow: inset 0 0 10px #000, 0 0 12px rgba(212,175,55,.18);
+            background: repeating-linear-gradient(90deg, transparent 0 9%, rgba(255,235,170,.8) 9.2% 9.6%, transparent 10% 12%), linear-gradient(#1b1008,#090603);
+        }
+        .pressure-gauge::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(180deg, rgba(255,255,255,.32), transparent 48%, rgba(255,255,255,.04));
+            pointer-events: none;
+        }
+        .pressure-low { animation: pressureWarning .55s ease-in-out infinite alternate; }
+        @keyframes pressureWarning { to { box-shadow: 0 0 18px rgba(255,35,16,.8), inset 0 0 10px rgba(255,30,0,.45); } }
+        .gear-pickup-juice { animation: gearPickupJuice .48s cubic-bezier(.18,.8,.25,1.25); }
+        @keyframes gearPickupJuice {
+            0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,190,40,0)); }
+            45% { transform: scale(1.16) rotate(-3deg); filter: drop-shadow(0 0 13px rgba(255,190,40,.9)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,190,40,0)); }
+        }
+        #floating-text-layer { position: absolute; inset: 0; overflow: hidden; }
+        .floating-message {
+            position: absolute;
+            left: 50%;
+            top: 46%;
+            transform: translate(-50%, 0);
+            white-space: nowrap;
+            font: 900 20px 'Cinzel', serif;
+            letter-spacing: .12em;
+            color: #ffe28a;
+            text-shadow: 0 0 8px #f4a900, 0 2px 8px #000;
+            animation: floatUp 1.15s ease-out forwards;
+        }
+        .floating-message.close-shave { color: #fff3c0; font-size: 25px; text-shadow: 0 0 12px #ff5b20, 0 2px 8px #000; }
+        @keyframes floatUp { to { opacity: 0; transform: translate(-50%, -90px) scale(1.12); } }
+        .combo-lit { color: #fff0a0; text-shadow: 0 0 14px #f6a900; }
+        .state-overlay {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity .28s ease, visibility .28s ease;
+        }
+        .state-overlay.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .instrument-switch {
+            width: 46px;
+            height: 46px;
+            color: #ffe8a0;
+            border: 2px solid #e4c66d;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 28%, #77531b, #261806 72%);
+            box-shadow: inset 0 2px 4px rgba(255,255,255,.25), inset 0 -4px 8px #090603, 0 4px 12px rgba(0,0,0,.7), 0 0 14px rgba(212,175,55,.25);
+            text-shadow: 0 0 8px rgba(255,205,94,.7);
+            transition: transform .18s ease, box-shadow .18s ease, color .18s ease;
+        }
+        .instrument-switch:hover {
+            color: #fff8cf;
+            transform: translateY(-2px) rotate(12deg);
+            box-shadow: inset 0 2px 5px rgba(255,255,255,.38), 0 0 20px rgba(255,190,55,.6);
+        }
+        .pause-veil { background: radial-gradient(circle at center, rgba(22,14,8,.78), rgba(0,0,0,.9)); }
+        .focus-ring:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 4px; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
+
+        /* Vintage Vignette */
+        .vignette {
+            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(8, 5, 2, 0.92) 100%);
+        }
+
+        @keyframes gearPulse {
+            0%, 100% { box-shadow: 0 0 24px rgba(212,175,55,.24), inset 0 0 25px rgba(212,175,55,.25); }
+            50% { box-shadow: 0 0 42px rgba(212,175,55,.48), inset 0 0 32px rgba(212,175,55,.4); }
+        }
+        .animate-gear-pulse { animation: gearPulse 3.5s infinite ease-in-out; }
+        #start-screen {
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(212,175,55,.55) rgba(0,0,0,.35);
+        }
+        .menu-dashboard {
+            width: min(100%, 54rem);
+            margin: auto;
+            padding: clamp(1.25rem, 3.5vw, 2.75rem);
+            background:
+                linear-gradient(135deg, rgba(255,230,167,.055), transparent 30%),
+                radial-gradient(ellipse at 50% 0%, #3b2717 0%, #1a1009 62%, #100a06 100%);
+            border: 1px solid rgba(255,224,153,.72);
+            box-shadow: 0 24px 80px rgba(0,0,0,.8), inset 0 0 0 5px rgba(212,175,55,.09), inset 0 0 36px rgba(212,175,55,.12);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+        .menu-dashboard::before {
+            inset: 9px;
+            border-style: solid;
+            border-color: rgba(212,175,55,.32);
+        }
+        .menu-header { padding: .25rem 3.25rem 0; }
+        .menu-logo {
+            font-size: clamp(1.8rem, 5vw, 3.8rem);
+            line-height: 1.08;
+            text-wrap: balance;
+        }
+        .menu-ornament {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .75rem;
+            color: rgba(231,190,84,.82);
+            margin: 1rem auto 1.1rem;
+            letter-spacing: .3em;
+        }
+        .menu-ornament::before, .menu-ornament::after {
+            content: '';
+            width: min(22vw, 8rem);
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(231,190,84,.85));
+        }
+        .menu-ornament::after { transform: rotate(180deg); }
+        .menu-stat {
+            min-height: 5.25rem;
+            border: 1px solid rgba(212,175,55,.55);
+            background: linear-gradient(145deg, rgba(111,70,23,.42), rgba(8,6,4,.78));
+            box-shadow: inset 0 1px 0 rgba(255,239,188,.18), 0 5px 16px rgba(0,0,0,.28);
+        }
+        .menu-primary {
+            min-height: 58px;
+            box-shadow: 0 8px 22px rgba(0,0,0,.55), 0 0 24px rgba(212,175,55,.2), inset 0 2px 3px rgba(255,255,255,.5);
+            animation: igniteGlow 2.8s ease-in-out infinite;
+        }
+        @keyframes igniteGlow {
+            50% { box-shadow: 0 8px 24px rgba(0,0,0,.55), 0 0 34px rgba(255,190,45,.42), inset 0 2px 3px rgba(255,255,255,.65); }
+        }
+        .menu-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .55rem;
+            min-height: 48px;
+            padding: .7rem 1rem;
+            border: 1px solid rgba(196,139,43,.62);
+            border-radius: .75rem;
+            background: linear-gradient(145deg, rgba(77,47,18,.8), rgba(15,10,6,.94));
+            color: #f3d37d;
+            font: 700 .75rem 'Cinzel', serif;
+            letter-spacing: .08em;
+            transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+        }
+        .menu-option:hover {
+            transform: translateY(-2px);
+            border-color: #f4d57d;
+            background: linear-gradient(145deg, rgba(113,73,25,.92), rgba(25,16,8,.98));
+            box-shadow: 0 7px 18px rgba(0,0,0,.35), 0 0 14px rgba(212,175,55,.18);
+        }
+        .menu-option:focus-visible, .menu-primary:focus-visible {
+            outline: 2px solid #fff0aa;
+            outline-offset: 3px;
+        }
+        .menu-help[hidden] { display: none; }
+        @media (max-height: 620px) and (orientation: landscape) {
+            #start-screen { align-items: flex-start; }
+            #device-screen { align-items: flex-start; }
+            .menu-dashboard { margin-block: auto; }
+            .menu-header { padding-top: 0; }
+            .menu-ornament { margin-block: .55rem; }
+        }
+        @media (max-width: 480px) {
+            .menu-header { padding-inline: 2.5rem; }
+            .menu-dashboard { border-radius: 1.1rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .menu-primary { animation: none; }
+        }
+        .device-choice {
+            min-height: 78px;
+            padding: 1rem;
+            border: 1px solid rgba(232,194,99,.8);
+            background: linear-gradient(145deg, rgba(102,66,23,.9), rgba(20,13,8,.98));
+            color: #fff0bc;
+            box-shadow: inset 0 1px 0 rgba(255,244,204,.24), 0 8px 24px rgba(0,0,0,.4);
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+        .device-choice:hover, .device-choice:focus-visible {
+            transform: translateY(-2px);
+            border-color: #fff0aa;
+            box-shadow: 0 0 24px rgba(212,175,55,.35), inset 0 1px 0 rgba(255,244,204,.36);
+        }
+        .device-choice:focus-visible { outline: 2px solid #fff0aa; outline-offset: 3px; }
+        #device-screen {
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+        #mobile-controls { display: none; }
+        body.device-mobile #mobile-controls:not(.hidden) {
+            display: flex;
+            position: absolute;
+            inset: auto 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: .75rem;
+            pointer-events: none;
+        }
+        .touch-cluster { display: flex; align-items: flex-end; gap: .6rem; pointer-events: auto; }
+        .touch-control {
+            display: grid;
+            place-items: center;
+            width: clamp(54px, 15vw, 72px);
+            height: clamp(54px, 15vw, 72px);
+            border: 2px solid rgba(255,224,153,.82);
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 25%, rgba(132,91,31,.96), rgba(27,17,8,.96) 74%);
+            color: #ffe8a0;
+            font-size: 1.15rem;
+            box-shadow: inset 0 2px 5px rgba(255,255,255,.25), 0 5px 16px rgba(0,0,0,.55), 0 0 14px rgba(212,175,55,.22);
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .touch-control:active, .touch-control.is-pressed {
+            transform: translateY(2px) scale(.96);
+            background: radial-gradient(circle at 35% 25%, #c28b2e, #39220b 74%);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,.65), 0 0 18px rgba(255,190,55,.5);
+        }
+        .touch-actions { flex-direction: column-reverse; align-items: flex-end; }
+        .touch-control.touch-jump { width: clamp(66px, 18vw, 84px); height: clamp(66px, 18vw, 84px); font-size: 1.35rem; }
+        .touch-control.touch-boost { width: 52px; height: 52px; font-size: .95rem; }
+        #desktop-hints {
+            display: none;
+            position: absolute;
+            left: 50%;
+            bottom: 1rem;
+            transform: translateX(-50%);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        body.device-desktop #desktop-hints { display: block; }
+        body.device-mobile #hud { padding-bottom: 7rem; }
+        body.device-mobile #game-controls { top: 1rem; right: 1rem; bottom: auto; }
+        @media (orientation: portrait) {
+            body.device-mobile #hud > .flex:first-child { padding-right: 0; gap: .4rem; }
+            body.device-mobile #hud > .flex:first-child > .steampunk-card { min-width: 0; padding: .5rem; }
+            body.device-mobile #hud > .flex:first-child > .steampunk-card:first-child,
+            body.device-mobile #hud > .flex:first-child > .steampunk-card:last-child { display: none; }
+        }
+            #dimension-glitch {
+                position: fixed;
+                inset: 0;
+                z-index: 65;
+                pointer-events: none;
+                opacity: 0;
+                mix-blend-mode: screen;
+                background: repeating-linear-gradient(0deg, transparent 0 7px, rgba(47,232,255,.18) 8px, transparent 10px 17px);
+                transition: opacity .12s linear;
+            }
+            #dimension-glitch.is-active { opacity: .8; animation: dimensionGlitch .17s steps(2,end) infinite; }
+            @keyframes dimensionGlitch {
+                0% { transform: translateX(-1.5%); clip-path: inset(8% 0 72%); filter: hue-rotate(0deg); }
+                50% { transform: translateX(1.2%); clip-path: inset(51% 0 30%); filter: hue-rotate(90deg); }
+                100% { transform: translateX(-.6%); clip-path: inset(78% 0 7%); filter: hue-rotate(180deg); }
+            }
+            body.cyber-world {
+                background: #050014;
+                --cyber-cyan: #3df4ff;
+                --cyber-pink: #ff35d3;
+                --cyber-lime: #7cff4f;
+                --cyber-panel: rgba(3, 10, 28, .94);
+            }
+            body.cyber-world .vignette {
+                background: radial-gradient(ellipse at 50% 45%, rgba(3,8,28,.04) 18%, rgba(2,3,18,.62) 72%, rgba(1,2,12,.94) 100%);
+            }
+            body.cyber-world .steampunk-card {
+                position: relative;
+                overflow: hidden;
+                border: 1px solid rgba(61,244,255,.65);
+                border-radius: 3px !important;
+                background:
+                    repeating-linear-gradient(0deg, rgba(61,244,255,.035) 0 1px, transparent 1px 5px),
+                    linear-gradient(135deg, rgba(61,244,255,.06) 0 1px, transparent 1px 14px),
+                    linear-gradient(145deg, var(--cyber-panel), rgba(20,5,35,.96));
+                box-shadow: 0 0 18px rgba(61,244,255,.18), inset 0 0 20px rgba(255,53,211,.08);
+                backdrop-filter: blur(10px);
+            }
+            body.cyber-world .steampunk-card::before,
+            body.cyber-world .steampunk-card::after { display: none; }
+            body.cyber-world #hud { font-family: 'Courier New', monospace; }
+            body.cyber-world #hud .steampunk-card { padding: .65rem .85rem; }
+            body.cyber-world #hud .steampunk-card span,
+            body.cyber-world #desktop-hints { font-family: 'Courier New', monospace; text-shadow: 0 0 8px rgba(61,244,255,.58); }
+            body.cyber-world #score-text,
+            body.cyber-world #gears-text,
+            body.cyber-world #highscore-hud-text,
+            body.cyber-world #boost-text {
+                color: #b7fbff !important;
+                -webkit-text-fill-color: #b7fbff;
+                font-family: 'Courier New', monospace;
+                font-variant-numeric: tabular-nums;
+                text-shadow: 0 0 8px #3df4ff, 0 0 18px rgba(61,244,255,.75);
+                animation: cyberReadoutFlicker 5.2s steps(2,end) infinite;
+            }
+            @keyframes cyberReadoutFlicker { 0%,96%,100% { opacity:1; } 97% { opacity:.62; } }
+            body.cyber-world #hud > .flex:first-child { align-items: flex-start; gap: .75rem; }
+            body.cyber-world #hud > .flex:first-child > .steampunk-card { min-width: 0; }
+            body.cyber-world #gear-counter { min-width: 3.5rem; }
+            body.cyber-world .steampunk-card > .fa-gear { display: none; }
+            body.cyber-world #gear-counter::before {
+                content: 'CREDITS';
+                color: var(--cyber-pink);
+                font: 700 8px 'Courier New', monospace;
+                letter-spacing: .16em;
+                text-shadow: 0 0 8px var(--cyber-pink);
+            }
+            body.cyber-world #pressure-gauge {
+                border: 1px solid rgba(61,244,255,.85);
+                border-radius: 2px !important;
+                background: repeating-linear-gradient(90deg, rgba(61,244,255,.12) 0 8px, transparent 8px 12px), #020715;
+                box-shadow: 0 0 12px rgba(61,244,255,.32), inset 0 0 8px #000;
+            }
+            body.cyber-world #pressure-gauge::after {
+                background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.12) 4px, transparent 5px);
+            }
+            body.cyber-world #boost-bar {
+                border-radius: 0 !important;
+                background: linear-gradient(90deg, #006cff, #3df4ff 55%, #ff35d3) !important;
+                box-shadow: 0 0 12px #3df4ff;
+                animation: plasmaPulse .8s ease-in-out infinite alternate;
+            }
+            @keyframes plasmaPulse { to { filter: brightness(1.45); box-shadow: 0 0 20px #3df4ff, 0 0 28px rgba(255,53,211,.5); } }
+            body.cyber-world #notification-banner {
+                border-radius: 2px !important;
+                color: #c9fcff;
+                background: rgba(4,8,28,.9);
+                text-shadow: 0 0 10px #3df4ff;
+            }
+            body.cyber-world .brass-title,
+            body.cyber-world .text-amber-100,
+            body.cyber-world .text-amber-200,
+            body.cyber-world .text-amber-300,
+            body.cyber-world .text-amber-400 { color: #a9fbff !important; -webkit-text-fill-color: #a9fbff; }
+            body.cyber-world .brass-button {
+                border-color: var(--cyber-cyan);
+                background: linear-gradient(180deg, #14758a, #123354 55%, #271037);
+                box-shadow: 0 0 18px rgba(61,244,255,.3), inset 0 0 8px rgba(255,53,211,.35);
+            }
+            body.cyber-world .instrument-switch,
+            body.cyber-world .menu-option,
+            body.cyber-world .menu-stat { border-color: var(--cyber-cyan); box-shadow: 0 0 14px rgba(61,244,255,.26); }
+            body.cyber-world #pressure-gauge,
+            body.cyber-world #notification-banner { border-color: var(--cyber-pink); box-shadow: 0 0 16px rgba(255,53,211,.35); }
+            body.cyber-world #creator-signature {
+                border-color: rgba(61,244,255,.62);
+                border-radius: 2px;
+                color: #a9fbff;
+                background: rgba(2,8,24,.82);
+                box-shadow: 0 0 15px rgba(61,244,255,.22);
+                text-shadow: 0 0 9px #3df4ff;
+            }
+            body.cyber-world #creator-signature .text-amber-500 { color: #ff65dd !important; }
+            body.cyber-world .floating-message {
+                color: #ff72e8;
+                font-family: 'Courier New', monospace;
+                letter-spacing: .08em;
+                text-shadow: 0 0 9px #ff35d3, 0 0 22px #3df4ff, 0 2px 8px #000;
+            }
+            body.cyber-world .floating-message.close-shave { color: #7dfaff; }
+            body.cyber-world .touch-control {
+                border-color: rgba(61,244,255,.9);
+                border-radius: 3px;
+                color: #b7fbff;
+                background: linear-gradient(145deg, rgba(3,19,46,.95), rgba(35,5,43,.96));
+                box-shadow: 0 0 12px rgba(61,244,255,.28), inset 0 0 8px rgba(255,53,211,.18);
+            }
+            body.cyber-world .touch-control:active,
+            body.cyber-world .touch-control.is-pressed { background: #126784; box-shadow: 0 0 22px #3df4ff; }
+            body.cyber-world #desktop-hints {
+                border-color: rgba(61,244,255,.65);
+                border-radius: 2px;
+                background: rgba(2,8,24,.9);
+                color: #b7fbff;
+            }
+            body.boiler-core {
+                background: #1b0509;
+                --cyber-cyan: #ff6536;
+                --cyber-pink: #ffb02e;
+                --cyber-panel: rgba(35, 7, 8, .94);
+            }
+            body.boiler-core .vignette {
+                background: radial-gradient(ellipse at 50% 45%, rgba(80,10,5,.02) 18%, rgba(28,3,6,.68) 72%, rgba(12,1,3,.96) 100%);
+            }
+            body.boiler-core .steampunk-card {
+                border-color: rgba(255,91,40,.75);
+                background: repeating-linear-gradient(0deg, rgba(255,86,35,.035) 0 1px, transparent 1px 5px), linear-gradient(145deg, rgba(47,12,10,.96), rgba(15,4,6,.98));
+                box-shadow: 0 0 18px rgba(255,57,20,.2), inset 0 0 20px rgba(255,159,38,.08);
+            }
+            body.boiler-core #score-text,
+            body.boiler-core #gears-text,
+            body.boiler-core #highscore-hud-text,
+            body.boiler-core #boost-text,
+            body.boiler-core .brass-title,
+            body.boiler-core .text-amber-100,
+            body.boiler-core .text-amber-200,
+            body.boiler-core .text-amber-300,
+            body.boiler-core .text-amber-400 { color: #ffd59b !important; -webkit-text-fill-color: #ffd59b; text-shadow: 0 0 10px #ff4d1f, 0 0 20px rgba(255,116,29,.7); }
+            body.boiler-core #pressure-gauge,
+            body.boiler-core #notification-banner { border-color: #ff5b29; box-shadow: 0 0 16px rgba(255,72,25,.45); }
+            body.boiler-core #boost-bar { background: linear-gradient(90deg, #a3150c, #ff3b18 55%, #ffc04a) !important; box-shadow: 0 0 14px #ff4b1f; }
+            body.boiler-core .brass-button,
+            body.boiler-core .instrument-switch,
+            body.boiler-core .menu-option,
+            body.boiler-core .menu-stat { border-color: #ff6634; box-shadow: 0 0 14px rgba(255,72,25,.32); }
+            body.boiler-core #creator-signature { border-color: rgba(255,91,40,.72); color: #ffd59b; background: rgba(35,7,8,.88); box-shadow: 0 0 15px rgba(255,72,25,.28); }
+            body.boiler-core .floating-message { color: #ffc04a; text-shadow: 0 0 10px #ff4b1f, 0 0 22px #ff982e, 0 2px 8px #000; }
+            body.boiler-core .touch-control { border-color: rgba(255,100,50,.92); color: #ffe0ad; background: linear-gradient(145deg, rgba(61,17,11,.96), rgba(28,5,8,.98)); box-shadow: 0 0 13px rgba(255,72,25,.32); }
+            @media (max-width: 640px) {
+                body.cyber-world #hud > .flex:first-child { gap: .35rem; }
+                body.cyber-world #hud > .flex:first-child > .steampunk-card { padding: .45rem .55rem; }
+            }
+            #dimension-title {
+                position: fixed;
+                inset: 0;
+                z-index: 64;
+                display: grid;
+                place-items: center;
+                padding: 2rem;
+                color: #c9fcff;
+                font: 900 clamp(1.4rem, 5vw, 3.8rem) 'Cinzel Decorative', serif;
+                letter-spacing: .12em;
+                text-align: center;
+                text-shadow: 0 0 14px #3df4ff, 0 0 35px #ff35d3;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity .4s ease;
+            }
+            #dimension-title.is-visible { opacity: 1; }
+    </style>
+</head>
+<body class="w-screen h-screen overflow-hidden bg-black select-none">
+
+    <!-- WebGL Canvas Container -->
+    <div id="canvas-container" class="w-full h-full absolute inset-0 z-0"></div>
+    <div id="floating-text-layer" class="z-20 pointer-events-none"></div>
+
+    <!-- Vignette Frame -->
+    <div class="pointer-events-none absolute inset-0 z-10 vignette"></div>
+    <div id="dimension-glitch" aria-hidden="true"></div>
+    <div id="dimension-title" aria-hidden="true">DIMENSION SHIFT<br><span id="dimension-title-era" class="text-[.45em] tracking-[.35em]">1900 // VICTORIAN INDUSTRIAL CITY</span></div>
+
+    <!-- HUD OVERLAY LAYER -->
+    <div id="hud" class="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-4 sm:p-6 hidden">
+        <!-- Top Stats Gauge Bar -->
+        <div class="flex justify-between items-start w-full max-w-5xl mx-auto pr-24 sm:pr-28">
+            <!-- Distance Counter -->
+            <div class="steampunk-card p-2.5 sm:p-3 px-4 sm:px-5 rounded-xl flex flex-col min-w-[140px] sm:min-w-[170px]">
+                <span class="text-[9px] sm:text-[10px] text-amber-200/70 font-cinzel tracking-widest uppercase"><i class="fa-solid fa-gauge-high mr-1"></i> Distance</span>
+                <span id="score-text" class="text-2xl sm:text-3xl font-black font-cinzel brass-title">0 m</span>
+            </div>
+
+            <!-- Top-right instrument controls are visible only while the simulation is active. -->
+            <div id="game-controls" class="absolute top-4 right-4 sm:top-6 sm:right-6 z-40 hidden pointer-events-auto flex gap-2">
+                <button id="hud-fullscreen-btn" type="button" class="instrument-switch focus-ring" aria-label="Vollbild aktivieren" title="Vollbild">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+                <button id="pause-btn" type="button" class="instrument-switch focus-ring" aria-label="Spiel pausieren" title="Pause">
+                    <i class="fa-solid fa-pause"></i>
+                </button>
+            </div>
+            <div id="desktop-hints" class="rounded-full border border-amber-500/45 bg-black/75 px-4 py-2 font-cinzel text-[10px] tracking-wide text-amber-100/85 shadow-xl backdrop-blur-md">
+                <i class="fa-regular fa-keyboard mr-1 text-amber-400" aria-hidden="true"></i>
+                A / D or ← / → steer <span class="mx-1 text-amber-500">•</span> W / SPACE jump <span class="mx-1 text-amber-500">•</span> S slide <span class="mx-1 text-amber-500">•</span> SHIFT boost <span class="mx-1 text-amber-500">•</span> C era switch test
+            </div>
+
+            <!-- Collected Gears Counter -->
+            <div class="steampunk-card px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center space-x-3">
+                <i class="fa-solid fa-gear text-amber-400 text-xl sm:text-2xl animate-spin" style="animation-duration: 5s;"></i>
+                <div id="gear-counter" class="flex flex-col items-center">
+                    <span id="gears-text" class="text-2xl sm:text-3xl font-black font-cinzel text-amber-200">0</span>
+                    <span id="combo-text" class="font-cinzel text-[9px] tracking-widest text-amber-400/70">COMBO x1</span>
+                </div>
+            </div>
+
+            <div id="mobile-controls" aria-label="Touch-Steuerung">
+                <div class="touch-cluster">
+                    <button type="button" class="touch-control" data-touch-action="left" aria-label="Nach links lenken"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                    <button type="button" class="touch-control" data-touch-action="right" aria-label="Nach rechts lenken"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                </div>
+                <div class="touch-cluster touch-actions">
+                    <button type="button" class="touch-control touch-jump" data-touch-action="jump" aria-label="Springen"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+                    <button type="button" class="touch-control touch-boost" data-touch-action="boost" aria-label="Dampf-Boost halten"><i class="fa-solid fa-fire-flame-curved" aria-hidden="true"></i></button>
+                    <button type="button" class="touch-control touch-slide" data-touch-action="slide" aria-label="Abducken"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
+                </div>
+            </div>
+
+            <!-- Best Record -->
+            <div class="steampunk-card p-2.5 sm:p-3 px-4 sm:px-5 rounded-xl flex flex-col min-w-[140px] sm:min-w-[170px] text-right">
+                <span class="text-[9px] sm:text-[10px] text-amber-200/70 font-cinzel tracking-widest uppercase"><i class="fa-solid fa-trophy mr-1"></i> Record</span>
+                <span id="highscore-hud-text" class="text-2xl sm:text-3xl font-black font-cinzel text-amber-300">0 m</span>
+            </div>
+        </div>
+
+        <!-- Center Steam Overdrive Banner -->
+        <div id="notification-banner" class="self-center bg-amber-950/90 border-2 border-amber-400 text-amber-100 px-6 sm:px-8 py-2 rounded-full font-cinzel font-bold tracking-widest text-xs sm:text-sm shadow-2xl transition-all duration-300 opacity-0 scale-90">
+            FULL STEAM OVERDRIVE!
+        </div>
+
+        <!-- Bottom Steam Pressure Gauge Bar -->
+        <div class="w-full max-w-md mx-auto mb-2 pointer-events-auto">
+            <div class="steampunk-card px-4 py-2.5 rounded-xl flex flex-col space-y-1">
+                <div class="flex justify-between text-xs text-amber-200 font-cinzel font-bold">
+                    <span><i class="fa-solid fa-fire-flame-curved mr-1 text-amber-400"></i> BOILER PRESSURE</span>
+                    <span id="boost-text" class="text-amber-300">100%</span>
+                </div>
+                <div id="pressure-gauge" class="pressure-gauge w-full h-4 rounded-full overflow-hidden p-0.5">
+                    <div id="boost-bar" class="h-full bg-gradient-to-r from-amber-700 via-amber-500 to-yellow-200 rounded-full transition-all duration-100" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATOR SIGNATURE -->
+    <div id="creator-signature" class="absolute bottom-3 left-4 z-40 pointer-events-none font-cinzel text-amber-300/90 text-[10px] sm:text-xs tracking-widest bg-black/80 px-3 sm:px-4 py-1.5 rounded-lg border border-amber-500/60 shadow-2xl backdrop-blur-md">
+        <span class="text-amber-500 font-bold">Virtual Studios</span> <span class="text-amber-100/60">|</span> by S.
+    </div>
+
+    <!-- DEVICE CONFIGURATION -->
+    <div id="device-screen" class="state-overlay absolute inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
+        <div class="gearwork-backdrop"></div>
+        <section class="menu-dashboard steampunk-card relative w-full max-w-2xl rounded-2xl text-center text-amber-100">
+            <div class="font-cinzel text-[10px] sm:text-xs tracking-[.3em] text-amber-400 mb-3">VIRTUAL STUDIOS <span class="text-amber-100/60">|</span> BY S.</div>
+            <h1 class="font-cinzel-dec brass-title text-xl sm:text-3xl font-black tracking-wide leading-tight">PLATFORM CONFIGURATION</h1>
+            <div class="menu-ornament my-4" aria-hidden="true"><i class="fa-solid fa-gear text-sm"></i><span>✦</span><i class="fa-solid fa-gear text-sm"></i></div>
+            <p class="font-cinzel text-xs sm:text-sm text-amber-100/80 mb-6">Wähle die Steuerung für deine aktuelle Spielsitzung.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button id="choose-mobile" type="button" class="device-choice rounded-xl font-cinzel text-sm sm:text-base font-bold tracking-wider focus-ring">
+                    <i class="fa-solid fa-mobile-screen-button text-2xl text-amber-300 mb-2 block" aria-hidden="true"></i>
+                    MOBILE / TOUCH-STEUERUNG
+                    <span class="mt-1 block text-[10px] font-normal tracking-normal text-amber-100/65">Smartphone &amp; Tablet</span>
+                </button>
+                <button id="choose-desktop" type="button" class="device-choice rounded-xl font-cinzel text-sm sm:text-base font-bold tracking-wider focus-ring">
+                    <i class="fa-solid fa-desktop text-2xl text-amber-300 mb-2 block" aria-hidden="true"></i>
+                    DESKTOP / KEYBOARD
+                    <span class="mt-1 block text-[10px] font-normal tracking-normal text-amber-100/65">PC, Laptop &amp; Tastatur</span>
+                </button>
+            </div>
+            <div class="mt-5 font-cinzel text-[9px] tracking-[.22em] text-amber-500/80">STEAM &amp; BRASS ENGINE — EST. 1900</div>
+        </section>
+    </div>
+
+    <!-- START MAIN MENU SCREEN -->
+    <div id="start-screen" class="state-overlay absolute inset-0 z-30 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-5 lg:p-8">
+        <div class="gearwork-backdrop"></div>
+        <main class="menu-dashboard steampunk-card rounded-2xl text-center text-amber-100 relative animate-gear-pulse">
+            <div class="absolute left-5 top-5 z-10 hidden sm:block font-cinzel text-[9px] tracking-widest text-amber-400/80">VIRTUAL STUDIOS <span class="text-amber-100/50">|</span> BY S.</div>
+            <button id="menu-fullscreen-btn" type="button" class="absolute right-5 top-5 z-10 instrument-switch focus-ring" aria-label="Vollbild aktivieren" title="Vollbild">
+                <i class="fa-solid fa-expand" aria-hidden="true"></i>
+            </button>
+            <header class="menu-header">
+                <div class="text-[10px] sm:text-xs font-cinzel tracking-[.28em] text-amber-400/85 mb-2">VIRTUAL STUDIOS PRESENTS</div>
+                <h1 class="menu-logo font-black font-cinzel-dec tracking-wide brass-title">
+                STEAMROLLER 1900
+                </h1>
+                <div class="menu-ornament" aria-hidden="true"><i class="fa-solid fa-gear text-sm"></i><span>✦</span><i class="fa-solid fa-gear text-sm"></i></div>
+                <p class="text-amber-200/75 text-[10px] sm:text-xs font-cinzel tracking-[.18em] uppercase">Clockwork Heavy Automaton Engine</p>
+                <p id="menu-control-note" class="mt-3 font-cinzel text-[9px] sm:text-[10px] tracking-wide text-amber-400/85"></p>
+            </header>
+
+            <section aria-label="Spielrekorde" class="grid grid-cols-2 gap-3 sm:gap-4 my-5 sm:my-6 font-cinzel">
+                <div class="menu-stat rounded-xl p-3 sm:p-4 flex flex-col justify-center">
+                    <span class="text-[9px] sm:text-[10px] text-amber-400/75 uppercase tracking-[.16em]"><i class="fa-solid fa-trophy mr-1"></i> Best Distance</span>
+                    <span id="start-highscore-text" class="text-2xl sm:text-3xl font-black text-amber-100 mt-1">0 m</span>
+                </div>
+                <div class="menu-stat rounded-xl p-3 sm:p-4 flex flex-col justify-center">
+                    <span class="text-[9px] sm:text-[10px] text-amber-400/75 uppercase tracking-[.16em]"><i class="fa-solid fa-gear mr-1"></i> Gears in Vault</span>
+                    <span id="start-gears-text" class="text-2xl sm:text-3xl font-black text-amber-300 mt-1">0</span>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-label="Menü">
+                <button id="start-btn" type="button" class="menu-primary sm:col-span-2 w-full py-3.5 brass-button font-cinzel font-black text-lg sm:text-xl tracking-[.16em] rounded-xl uppercase cursor-pointer">
+                    <i class="fa-solid fa-fire-flame-curved mr-2" aria-hidden="true"></i> Ignite Engine
+                </button>
+                <button id="upgrade-btn" type="button" class="menu-option">
+                    <i class="fa-solid fa-wrench" aria-hidden="true"></i> Workshop
+                </button>
+                <button id="settings-btn" type="button" class="menu-option">
+                    <i class="fa-solid fa-sliders" aria-hidden="true"></i> Settings
+                </button>
+                <button id="help-toggle" type="button" class="menu-option sm:col-span-2" aria-expanded="false" aria-controls="menu-help">
+                    <i class="fa-solid fa-compass" aria-hidden="true"></i> Anleitung <i id="help-chevron" class="fa-solid fa-chevron-down text-[10px]" aria-hidden="true"></i>
+                </button>
+            </section>
+
+            <section id="menu-help" class="menu-help mt-4 rounded-xl border border-amber-800/70 bg-black/55 p-4 text-left" aria-label="Steuerung" hidden>
+                <h2 class="font-cinzel font-bold text-xs tracking-widest text-amber-400 mb-3"><i class="fa-solid fa-gamepad mr-2"></i>STEERING & CONTROLS</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:text-xs text-amber-100/90">
+                    <div><kbd class="px-1.5 py-0.5 bg-amber-950 border border-amber-700/60 rounded text-amber-300">A / D</kbd> or swipe left/right — Steer</div>
+                    <div><kbd class="px-1.5 py-0.5 bg-amber-950 border border-amber-700/60 rounded text-amber-300">SPACE</kbd> or swipe up — Jump</div>
+                    <div><kbd class="px-1.5 py-0.5 bg-amber-950 border border-amber-700/60 rounded text-amber-300">S</kbd> or swipe down — Lower</div>
+                    <div><kbd class="px-1.5 py-0.5 bg-amber-950 border border-amber-700/60 rounded text-amber-300">SHIFT</kbd> or hold — Steam boost</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- PAUSE OVERLAY -->
+    <div id="pause-screen" class="state-overlay is-hidden absolute inset-0 z-50 flex items-center justify-center pause-veil backdrop-blur-md p-4" aria-hidden="true">
+        <div class="max-w-md w-full steampunk-card rounded-2xl p-7 sm:p-8 text-center text-amber-100 shadow-2xl relative border-2 border-amber-500">
+            <div class="text-amber-400/80 font-cinzel tracking-[.28em] text-[10px] mb-2">SIMULATION ANGEHALTEN</div>
+            <h2 class="text-3xl font-black font-cinzel-dec brass-title mb-2">PAUSE</h2>
+            <p class="text-amber-200/75 font-serif text-sm mb-6">Der Kessel ruht. Deine Fahrt wird exakt an dieser Stelle fortgesetzt.</p>
+            <div class="space-y-3">
+                <button id="resume-btn" type="button" class="w-full py-3.5 brass-button font-cinzel font-black text-lg tracking-wider rounded-xl uppercase focus-ring">Fortfahren</button>
+                <button id="pause-restart-btn" type="button" class="w-full py-3 bg-amber-950/90 hover:bg-amber-900 border border-amber-600/70 text-amber-200 font-cinzel font-bold rounded-xl transition-colors focus-ring"><i class="fa-solid fa-rotate-right mr-2"></i>Neustarten</button>
+                <button id="main-menu-btn" type="button" class="w-full py-3 bg-black/60 hover:bg-black/80 border border-amber-900/80 text-amber-400 font-cinzel font-bold rounded-xl transition-colors focus-ring"><i class="fa-solid fa-house mr-2"></i>Zurück zum Hauptmenü</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ui-status" class="state-overlay is-hidden fixed left-1/2 top-5 z-[60] -translate-x-1/2 rounded-lg border border-amber-500/80 bg-black/90 px-5 py-3 text-center font-cinzel text-xs tracking-wider text-amber-200 shadow-2xl pointer-events-none" role="status" aria-live="polite"></div>
+
+    <!-- WORKSHOP MODAL -->
+    <div id="upgrades-modal" class="absolute inset-0 z-40 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 hidden">
+        <div class="max-w-md w-full steampunk-card rounded-2xl p-6 text-amber-100 border-2 border-amber-500 space-y-4">
+            <div class="flex justify-between items-center border-b border-amber-800/80 pb-3">
+                <h3 class="text-xl font-black font-cinzel text-amber-300"><i class="fa-solid fa-screwdriver-wrench mr-2"></i>BOILER WORKSHOP</h3>
+                <button id="close-upgrades" class="text-amber-400 hover:text-amber-100 text-xl cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-3 font-serif">
+                <div class="bg-black/60 p-3.5 rounded-xl flex justify-between items-center border border-amber-800/60">
+                    <div>
+                        <div class="font-cinzel font-bold text-sm text-amber-300">Pressure Tank Capacity</div>
+                        <div class="text-xs text-amber-200/70">Reduces steam boost depletion rate</div>
+                        <div id="boost-lvl-text" class="text-xs text-amber-400 font-cinzel font-bold mt-1">Lvl 1 / 5</div>
+                    </div>
+                    <button id="buy-boost-upgrade" class="px-3 py-2 brass-button font-cinzel font-bold text-xs rounded-lg cursor-pointer">
+                        10 Gears
+                    </button>
+                </div>
+
+                <div class="bg-black/60 p-3.5 rounded-xl flex justify-between items-center border border-amber-800/60">
+                    <div>
+                        <div class="font-cinzel font-bold text-sm text-amber-300">Magnetic Collector Coil</div>
+                        <div class="text-xs text-amber-200/70">Attracts nearby brass gears automatically</div>
+                        <div id="magnet-lvl-text" class="text-xs text-amber-400 font-cinzel font-bold mt-1">Lvl 1 / 5</div>
+                    </div>
+                    <button id="buy-magnet-upgrade" class="px-3 py-2 brass-button font-cinzel font-bold text-xs rounded-lg cursor-pointer">
+                        15 Gears
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="absolute inset-0 z-40 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 hidden">
+        <div class="max-w-md w-full steampunk-card rounded-2xl p-6 text-amber-100 border-2 border-amber-500 space-y-4">
+            <div class="flex justify-between items-center border-b border-amber-800/80 pb-3">
+                <h3 class="text-xl font-black font-cinzel text-amber-300"><i class="fa-solid fa-sliders mr-2"></i>ENGINE SETTINGS</h3>
+                <button id="close-settings" class="text-amber-400 hover:text-amber-100 text-xl cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-4 font-cinzel text-sm">
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs text-amber-200">
+                        <span>Motion Inertia & Softness</span>
+                        <span id="softness-val-text">12</span>
+                    </div>
+                    <input type="range" id="softness-slider" min="5" max="25" value="12" class="w-full accent-amber-500 cursor-pointer">
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <span>Bloom Glow Shader</span>
+                    <input type="checkbox" id="bloom-toggle" checked class="w-5 h-5 accent-amber-500 cursor-pointer">
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span>Dynamic Gas Lamp Shadows</span>
+                    <input type="checkbox" id="shadows-toggle" checked class="w-5 h-5 accent-amber-500 cursor-pointer">
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <span>God Rays (Desktop High)</span>
+                    <input type="checkbox" id="godrays-toggle" checked class="w-5 h-5 accent-amber-500 cursor-pointer">
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <span>Synthesized Sound FX</span>
+                    <input type="checkbox" id="audio-toggle" checked class="w-5 h-5 accent-amber-500 cursor-pointer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="gameover-screen" class="state-overlay is-hidden absolute inset-0 z-30 flex items-center justify-center bg-black/85 backdrop-blur-lg p-4" aria-hidden="true">
+        <div class="max-w-md w-full steampunk-card rounded-2xl p-8 text-center text-amber-100 shadow-2xl relative border-2 border-amber-600">
+            <h2 class="text-3xl font-black font-cinzel-dec tracking-wider mb-1 brass-title">
+                BOILER CRASHED
+            </h2>
+            <p class="text-amber-300/70 text-xs font-cinzel tracking-widest uppercase mb-6">Engine Overheated & Destroyed</p>
+
+            <div class="bg-black/60 rounded-xl p-5 mb-6 border border-amber-900/80 space-y-3 font-cinzel">
+                <div class="flex justify-between items-center">
+                    <span class="text-amber-300/70 text-sm">DISTANCE</span>
+                    <span id="final-score" class="text-2xl font-black text-amber-100">0 m</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-amber-300/70 text-sm">GEARS SALVAGED</span>
+                    <span id="final-gears" class="text-2xl font-bold text-amber-400">0</span>
+                </div>
+                <hr class="border-amber-900/80">
+                <div class="flex justify-between items-center">
+                    <span class="text-amber-400 text-sm">BEST RECORD</span>
+                    <span id="final-highscore" class="text-2xl font-bold text-amber-300">0 m</span>
+                </div>
+            </div>
+
+            <button id="restart-btn" class="w-full py-4 brass-button font-cinzel font-black text-xl tracking-wider rounded-xl uppercase cursor-pointer">
+                RE-IGNITE STEAM ENGINE
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME ENGINE SCRIPT -->
+    <script>
+        /**
+         * 1900 CLOCKWORK RUNNER - STEAMROLLER EDITION
+         * Powered by Three.js & Procedural Audio/Visual Engines
+         * Designed by Sstudios / by S.
+         */
+
+        // ==========================================
+        // 1. LOCALSTORAGE & GAME SAVE MANAGER
+        // ==========================================
+        const GameSave = {
+            KEY: 'steamroller_1900_save_v3',
+            data: {
+                highscore: 0,
+                gears: 0,
+                boostLvl: 1,
+                magnetLvl: 1,
+                bloom: true,
+                shadows: true,
+                godRays: true,
+                audio: true,
+                softness: 12
+            },
+            load() {
+                try {
+                    const saved = localStorage.getItem(this.KEY);
+                    if (saved) this.data = Object.assign(this.data, JSON.parse(saved));
+                } catch(e) { console.warn('Save load error:', e); }
+            },
+            save() {
+                try {
+                    localStorage.setItem(this.KEY, JSON.stringify(this.data));
+                } catch(e) { console.warn('Save write error:', e); }
+            }
+        };
+        GameSave.load();
+
+        // ==========================================
+        // 2. PROCEDURAL SOUND SYNTHESIZER
+        // ==========================================
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.rumbleOsc = null;
+                this.rumbleGain = null;
+                this.lastHiss = 0;
+                this.musicTimer = null;
+                this.musicGain = null;
+                this.nextMusicTime = 0;
+                this.musicStep = 0;
+                this.musicBoost = false;
+                this.musicSpeed = 1;
+                this.cyberMode = false;
+                this.musicNotes = [659.25, 783.99, 987.77, 783.99, 587.33, 659.25, 783.99, 523.25, 659.25, 783.99, 1046.5, 987.77, 783.99, 659.25, 587.33, 523.25];
+                this.bassNotes = [110, 110, 146.83, 146.83, 164.81, 164.81, 146.83, 123.47];
+                this.arpNotes = [440, 523.25, 659.25, 783.99, 659.25, 523.25, 493.88, 587.33];
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+                if (this.ctx && !this.musicGain) {
+                    this.musicGain = this.ctx.createGain();
+                    this.musicGain.gain.value = 0;
+                    this.musicGain.connect(this.ctx.destination);
+                }
+            }
+            startMusic() {
+                if (!GameSave.data.audio || !this.ctx || !this.musicGain) return;
+                if (this.musicTimer) return;
+                this.nextMusicTime = this.ctx.currentTime + 0.06;
+                this.musicStep = 0;
+                this.musicGain.gain.cancelScheduledValues(this.ctx.currentTime);
+                this.musicGain.gain.setTargetAtTime(0.18, this.ctx.currentTime, 0.12);
+                this.musicTimer = window.setInterval(() => this.scheduleMusic(), 25);
+            }
+            stopMusic() {
+                if (this.musicTimer) {
+                    window.clearInterval(this.musicTimer);
+                    this.musicTimer = null;
+                }
+                if (this.musicGain && this.ctx) {
+                    this.musicGain.gain.cancelScheduledValues(this.ctx.currentTime);
+                    this.musicGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.08);
+                }
+            }
+            setMusicBoost(active) {
+                this.musicBoost = active;
+            }
+            setMusicSpeed(speed) {
+                this.musicSpeed = THREE.MathUtils.clamp(speed, 0.85, 1.45);
+            }
+            setCyberMode(active) {
+                this.cyberMode = active;
+            }
+            scheduleMusic() {
+                if (!this.ctx || !this.musicGain || !GameSave.data.audio) {
+                    this.stopMusic();
+                    return;
+                }
+                const tempo = (this.cyberMode ? 94 : 118) * this.musicSpeed * (this.musicBoost ? 1.08 : 1);
+                const pitch = (this.cyberMode ? 0.68 : 1) * (1 + (this.musicSpeed - 1) * 0.055 + (this.musicBoost ? 0.075 : 0));
+                const stepDuration = 60 / tempo / 2;
+                while (this.nextMusicTime < this.ctx.currentTime + 0.12) {
+                    const step = this.musicStep % 16;
+                    const when = this.nextMusicTime;
+                    const bass = this.bassNotes[Math.floor(step / 2) % this.bassNotes.length];
+                    this.playMusicNote(bass * (this.cyberMode ? 0.52 : 1), when, step % 2 === 0 ? 0.095 : 0.055, 0.16, this.cyberMode ? 'sawtooth' : 'triangle');
+
+                    const melody = this.musicNotes[step];
+                    this.playMusicNote(melody * pitch, when, step % 4 === 0 ? 0.055 : 0.034, 0.105, this.cyberMode ? 'sawtooth' : 'square');
+
+                    if (step % 2 === 1) {
+                        const arp = this.arpNotes[(step + Math.floor(this.musicStep / 16)) % this.arpNotes.length];
+                        this.playMusicNote(arp * pitch * (this.musicBoost ? 2 : 1), when, this.cyberMode ? 0.012 : (this.musicBoost ? 0.028 : 0.015), 0.07, this.cyberMode ? 'triangle' : 'square');
+                    }
+                    this.nextMusicTime += stepDuration;
+                    this.musicStep++;
+                }
+            }
+            playMusicNote(frequency, when, volume, duration, waveform) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = waveform;
+                osc.frequency.setValueAtTime(frequency, when);
+                gain.gain.setValueAtTime(0.0001, when);
+                gain.gain.exponentialRampToValueAtTime(volume, when + 0.008);
+                gain.gain.setTargetAtTime(0.0001, when + 0.018, Math.max(0.012, duration / 5));
+                osc.connect(gain);
+                gain.connect(this.musicGain);
+                osc.start(when);
+                osc.stop(when + duration);
+            }
+            playPistonChug() {
+                if (!GameSave.data.audio || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80 + Math.random() * 20, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.08);
+            }
+            playSteamHiss() {
+                if (!GameSave.data.audio || !this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 0.2;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1300;
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.005, this.ctx.currentTime + 0.2);
+
+                noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+                noise.start();
+            }
+            playCoinChime() {
+                if (!GameSave.data.audio || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1800, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.22);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.22);
+            }
+            playLaneClick() {
+                if (!GameSave.data.audio || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(740, now);
+                osc.frequency.exponentialRampToValueAtTime(310, now + 0.055);
+                gain.gain.setValueAtTime(0.055, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now); osc.stop(now + 0.08);
+            }
+            startBoostRumble() {
+                if (!GameSave.data.audio || !this.ctx || this.rumbleOsc) return;
+                this.rumbleOsc = this.ctx.createOscillator();
+                this.rumbleGain = this.ctx.createGain();
+                this.rumbleOsc.type = 'sawtooth';
+                this.rumbleOsc.frequency.value = 42;
+                this.rumbleGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+                this.rumbleGain.gain.exponentialRampToValueAtTime(0.035, this.ctx.currentTime + 0.18);
+                this.rumbleOsc.connect(this.rumbleGain);
+                this.rumbleGain.connect(this.ctx.destination);
+                this.rumbleOsc.start();
+            }
+            stopBoostRumble() {
+                if (!this.rumbleOsc || !this.ctx) return;
+                const osc = this.rumbleOsc;
+                this.rumbleGain.gain.cancelScheduledValues(this.ctx.currentTime);
+                this.rumbleGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.045);
+                this.rumbleOsc = null;
+                this.rumbleGain = null;
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+            playBoostHiss() {
+                if (!GameSave.data.audio || !this.ctx || this.ctx.currentTime - this.lastHiss < 0.24) return;
+                this.lastHiss = this.ctx.currentTime;
+                this.playSteamHiss();
+            }
+            playCrash() {
+                if (!GameSave.data.audio || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.4);
+            }
+        }
+        const audioFX = new SoundFX();
+
+        // ==========================================
+        // 3. THREE.JS GLOBALS & GAME VARIABLES
+        // ==========================================
+        const GAME_STATES = Object.freeze({
+            DEVICE_SELECT: 'DEVICE_SELECT',
+            MAIN_MENU: 'MAIN_MENU',
+            PLAYING: 'PLAYING',
+            PAUSED: 'PAUSED',
+            GAME_OVER: 'GAME_OVER'
+        });
+        const GAME_STATE_TRANSITIONS = Object.freeze({
+            DEVICE_SELECT: [GAME_STATES.MAIN_MENU],
+            MAIN_MENU: [GAME_STATES.PLAYING],
+            PLAYING: [GAME_STATES.PAUSED, GAME_STATES.GAME_OVER],
+            PAUSED: [GAME_STATES.PLAYING, GAME_STATES.MAIN_MENU],
+            GAME_OVER: [GAME_STATES.PLAYING]
+        });
+        const DIMENSION_SHIFT_INTERVAL = 500;
+        const DEVICE_SESSION_KEY = 'steamroller_1900_device_mode';
+        let deviceMode = null;
+        let gameState = GAME_STATES.DEVICE_SELECT;
+        let scene, camera, renderer, composer, bloomPass, godRaysPass, heatDistortionPass, clock;
+        let ambientLight, keyLight, heatHaze, heatHazeMaterial;
+        let roadBaseMesh, cyberGridTexture, dimensionRift, dimensionRiftMaterial;
+        let boilerCoreRoadFx;
+        let cyberCollectibleMaterial, cyberObstacleMaterial;
+        let isDimensionTransition = false;
+        let dimensionTransitionElapsed = 0;
+        let isCyberWorld = false;
+        let currentDimension = 0;
+        let dimensionTarget = 0;
+        let dimensionWorldApplied = false;
+        let nextDimensionShiftDistance = DIMENSION_SHIFT_INTERVAL;
+        let victorianWorldDefaults = null;
+        const cyberCircuitMaterials = [];
+        const aetherCrystals = [];
+        const transitionCameraPosition = new THREE.Vector3();
+        const cinematicFocus = new THREE.Vector3();
+        const cinematicCloseCamera = new THREE.Vector3();
+        const cinematicRiftCamera = new THREE.Vector3(0, 2.2, -3.2);
+        const cyberMaterialCache = new WeakMap();
+        const cyberPalette = [0x3df4ff, 0xff35d3, 0x7cff4f];
+        const heatHazeScreenPosition = new THREE.Vector3();
+        let gasLightTime = 0;
+        
+        // Steamroller Rigged Components
+        let vehicleGroup, rollerDrum, rearWheelLeft, rearWheelRight;
+        let leftPiston, rightPiston, sideGearLeft, sideGearRight, fireboxGrateMesh;
+        let cobblestoneTexMesh;
+
+        // Particle Steam Emitter
+        let steamParticles = [];
+        const MAX_STEAM_PARTICLES = 45;
+        let sparkParticles = [];
+        let dustParticles = [];
+        let shockwaveRings = [];
+        let shockwaveCursor = 0;
+        const MAX_SPARK_PARTICLES = 24;
+        const MAX_DUST_PARTICLES = 20;
+        const MAX_IMPACT_PARTICLES = 42;
+        let impactParticles = [];
+        let impactParticleCursor = 0;
+        let atmosphericMotes = [];
+        const MAX_ATMOSPHERIC_MOTES = 26;
+
+        let isRunning = false;
+        let score = 0;
+        let distanceTravelled = 0;
+        let distanceAccumulator = 0;
+        let sessionGears = 0;
+        let shieldCharges = 0;
+        let comboCount = 0;
+        let comboTimer = 0;
+        let atmosphereColor = new THREE.Color(0x070503);
+        const atmospherePalette = [0x6f3027, 0x182b48, 0x263552, 0x60402a].map(color => new THREE.Color(color));
+        const ambientTint = new THREE.Color(0x765741);
+        const keyTint = new THREE.Color(0xffc078);
+
+        const BASE_SPEED = 28;
+        let currentSpeed = BASE_SPEED;
+        let isBoosting = false;
+        let boostGauge = 100;
+
+        // 3-Lane Mechanics
+        const LANES = [-3.8, 0, 3.8];
+        let currentLane = 1;
+        let targetX = LANES[currentLane];
+        let posX = 0;
+
+        // Jump & Hydraulic Lowering Physics
+        let posY = 0;
+        let velY = 0;
+        const GRAVITY = -44;
+        const JUMP_FORCE = 15.5;
+        let isGrounded = true;
+        let isSliding = false;
+        let slideTimer = 0;
+
+        // Camera Shake & Lerp
+        let cameraTargetPos = new THREE.Vector3(0, 4.3, 9.5);
+        let cameraShakeIntensity = 0;
+        const cameraShakeOffset = new THREE.Vector3();
+        const cameraShakeVelocity = new THREE.Vector3();
+        const cameraRenderTarget = new THREE.Vector3();
+        const impactDistortionCenter = new THREE.Vector2(0.5, 0.5);
+        let impactDistortion = 0;
+        let boostWasActive = false;
+
+        // Spawning Pools
+        let obstacles = [];
+        let collectibles = [];
+        let streetLamps = [];
+        let cityBlocks = [];
+        let gasLampLights = [];
+        let spawnDistanceCounter = 0;
+
+        const keyState = {};
+        
+        // Touch Interaction State
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchTime = 0;
+
+        // ==========================================
+        // 4. PROCEDURAL CANVAS TEXTURE GENERATOR
+        // ==========================================
+        let proceduralTextureCache = null;
+        function createProceduralTextures() {
+            if (proceduralTextureCache) return proceduralTextureCache;
+            // Aged Brass Texture
+            const brassCanvas = document.createElement('canvas');
+            brassCanvas.width = 256; brassCanvas.height = 256;
+            const bCtx = brassCanvas.getContext('2d');
+            bCtx.fillStyle = '#a87e2a'; bCtx.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 400; i++) {
+                bCtx.fillStyle = Math.random() > 0.5 ? 'rgba(255,235,170,0.15)' : 'rgba(70,45,10,0.2)';
+                bCtx.fillRect(Math.random()*256, Math.random()*256, Math.random()*25+5, 2);
+            }
+            const brassTex = new THREE.CanvasTexture(brassCanvas);
+
+            // Rusted Iron Tread Texture
+            const ironCanvas = document.createElement('canvas');
+            ironCanvas.width = 256; ironCanvas.height = 256;
+            const iCtx = ironCanvas.getContext('2d');
+            iCtx.fillStyle = '#222020'; iCtx.fillRect(0, 0, 256, 256);
+            iCtx.fillStyle = '#111111';
+            for (let y = 0; y < 256; y += 32) {
+                iCtx.fillRect(0, y, 256, 12);
+            }
+            for (let i = 0; i < 300; i++) {
+                iCtx.fillStyle = 'rgba(120,60,20,0.15)';
+                iCtx.fillRect(Math.random()*256, Math.random()*256, 4, 4);
+            }
+            const ironTex = new THREE.CanvasTexture(ironCanvas);
+
+            // Glowing Firebox Grate Texture
+            const fireCanvas = document.createElement('canvas');
+            fireCanvas.width = 128; fireCanvas.height = 128;
+            const fCtx = fireCanvas.getContext('2d');
+            fCtx.fillStyle = '#1a0500'; fCtx.fillRect(0, 0, 128, 128);
+            fCtx.fillStyle = '#ff4500';
+            for (let y = 16; y < 128; y += 24) {
+                for (let x = 16; x < 128; x += 24) {
+                    fCtx.beginPath();
+                    fCtx.arc(x, y, 6, 0, Math.PI * 2);
+                    fCtx.fill();
+                }
+            }
+            const fireTex = new THREE.CanvasTexture(fireCanvas);
+
+            const cobbleCanvas = document.createElement('canvas');
+            cobbleCanvas.width = 512;
+            cobbleCanvas.height = 512;
+            const cCtx = cobbleCanvas.getContext('2d');
+            cCtx.fillStyle = '#171a1b';
+            cCtx.fillRect(0, 0, 512, 512);
+            for (let row = 0; row < 16; row++) {
+                const offset = row % 2 ? -16 : 0;
+                for (let col = -1; col < 9; col++) {
+                    const x = col * 64 + offset + 2;
+                    const y = row * 32 + 2;
+                    const shade = 36 + Math.floor(Math.random() * 22);
+                    cCtx.fillStyle = `rgb(${shade},${shade + 2},${shade + 3})`;
+                    cCtx.beginPath();
+                    cCtx.moveTo(x + 5, y + 3 + Math.random() * 3);
+                    cCtx.lineTo(x + 56 + Math.random() * 5, y + 2);
+                    cCtx.lineTo(x + 62, y + 9 + Math.random() * 6);
+                    cCtx.lineTo(x + 58 + Math.random() * 3, y + 27);
+                    cCtx.lineTo(x + 8, y + 30);
+                    cCtx.lineTo(x + 2 + Math.random() * 5, y + 20);
+                    cCtx.closePath();
+                    cCtx.fill();
+                    cCtx.strokeStyle = 'rgba(4,7,9,.78)';
+                    cCtx.lineWidth = 2;
+                    cCtx.stroke();
+                    cCtx.fillStyle = `rgba(190,205,208,${0.04 + Math.random() * 0.1})`;
+                    cCtx.fillRect(x + 9, y + 5, 28 + Math.random() * 13, 2);
+                }
+            }
+            const cobbleMap = new THREE.CanvasTexture(cobbleCanvas);
+            cobbleMap.wrapS = THREE.RepeatWrapping;
+            cobbleMap.wrapT = THREE.RepeatWrapping;
+            cobbleMap.repeat.set(4, 55);
+            cobbleMap.encoding = THREE.sRGBEncoding;
+            const reliefMap = new THREE.CanvasTexture(cobbleCanvas);
+            reliefMap.wrapS = THREE.RepeatWrapping;
+            reliefMap.wrapT = THREE.RepeatWrapping;
+            reliefMap.repeat.set(4, 55);
+
+            brassTex.encoding = THREE.sRGBEncoding;
+            ironTex.encoding = THREE.sRGBEncoding;
+            fireTex.encoding = THREE.sRGBEncoding;
+            proceduralTextureCache = { brassTex, ironTex, fireTex, cobbleMap, reliefMap };
+            return proceduralTextureCache;
+        }
+
+        // ==========================================
+        // 5. ENGINE INITIALIZATION
+        // ==========================================
+        function initEngine() {
+            const container = document.getElementById('canvas-container');
+
+            // Scene & Warm Victorian Fog
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x241914);
+            scene.fog = new THREE.FogExp2(0x241914, 0.012);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(getBaseCameraFov(), window.innerWidth / window.innerHeight, 0.1, 230);
+            camera.position.copy(cameraTargetPos);
+
+            // WebGL Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = GameSave.data.shadows;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            // Post-Processing Shaders
+            setupPostProcessing();
+
+            clock = new THREE.Clock();
+
+            // Build Scene Components
+            setupLighting();
+            setupVictorianStreet();
+            createSteamrollerCharacter();
+            setupSteamParticleSystem();
+
+            bindEvents();
+            updateUIState();
+            let savedDeviceMode = null;
+            try {
+                savedDeviceMode = sessionStorage.getItem(DEVICE_SESSION_KEY);
+            } catch (error) {
+                console.warn('Device preference could not be read for this session:', error);
+            }
+            if (savedDeviceMode === 'mobile' || savedDeviceMode === 'desktop') {
+                applyDeviceMode(savedDeviceMode);
+                transitionGameState(GAME_STATES.MAIN_MENU);
+            } else {
+                transitionGameState(GAME_STATES.DEVICE_SELECT);
+            }
+            updateFullscreenButtons();
+        }
+
+        function getBaseCameraFov() {
+            if (deviceMode !== 'mobile') return 60;
+            return window.innerHeight > window.innerWidth ? 72 : 66;
+        }
+
+        function applyDeviceMode(mode, enableDesktopHigh = false) {
+            if (mode !== 'mobile' && mode !== 'desktop') {
+                throw new Error(`Unknown device mode: ${mode}`);
+            }
+            deviceMode = mode;
+            document.body.classList.toggle('device-mobile', mode === 'mobile');
+            document.body.classList.toggle('device-desktop', mode === 'desktop');
+            const note = document.getElementById('menu-control-note');
+            note.textContent = mode === 'mobile'
+                ? 'TOUCH: Daumensteuerung & Wischgesten'
+                : 'KEYBOARD: A / D steuern · W / SPACE springen · S ducken · SHIFT boost';
+
+            if (mode === 'desktop' && enableDesktopHigh) {
+                GameSave.data.bloom = true;
+                GameSave.data.shadows = true;
+                GameSave.data.godRays = true;
+                GameSave.save();
+            }
+            const bloomToggle = document.getElementById('bloom-toggle');
+            const shadowsToggle = document.getElementById('shadows-toggle');
+            const godRaysToggle = document.getElementById('godrays-toggle');
+            bloomToggle.checked = GameSave.data.bloom;
+            shadowsToggle.checked = GameSave.data.shadows;
+            godRaysToggle.checked = mode === 'desktop' && GameSave.data.godRays;
+            godRaysToggle.disabled = mode !== 'desktop';
+            if (bloomPass) bloomPass.enabled = GameSave.data.bloom;
+            if (godRaysPass) godRaysPass.enabled = mode === 'desktop' && GameSave.data.godRays;
+            if (renderer) renderer.shadowMap.enabled = GameSave.data.shadows;
+            if (camera) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.fov = getBaseCameraFov();
+                camera.updateProjectionMatrix();
+            }
+        }
+
+        function chooseDeviceMode(mode) {
+            applyDeviceMode(mode, true);
+            let storageWarning = false;
+            try {
+                sessionStorage.setItem(DEVICE_SESSION_KEY, mode);
+            } catch (error) {
+                console.warn('Device preference could not be saved for this session:', error);
+                storageWarning = true;
+            }
+            transitionGameState(GAME_STATES.MAIN_MENU);
+            if (storageWarning) announceStatus('Gerätewahl konnte nicht für diese Sitzung gespeichert werden.');
+            document.getElementById('start-btn').focus();
+        }
+
+        function setupPostProcessing() {
+            const renderPass = new THREE.RenderPass(scene, camera);
+            bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                0.85, 0.45, 0.8
+            );
+            bloomPass.enabled = GameSave.data.bloom;
+
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderPass);
+            composer.addPass(bloomPass);
+            godRaysPass = new THREE.ShaderPass({
+                uniforms: {
+                    tDiffuse: { value: null },
+                    uLightPosition: { value: new THREE.Vector2(0.5, 0.43) },
+                    uIntensity: { value: 0.12 }
+                },
+                vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+                fragmentShader: 'uniform sampler2D tDiffuse; uniform vec2 uLightPosition; uniform float uIntensity; varying vec2 vUv; void main(){ vec2 sampleUv=vUv; vec2 stepUv=(vUv-uLightPosition)/24.0; float decay=0.96; float rays=0.0; for(int i=0;i<24;i++){ sampleUv-=stepUv; vec3 sampleColor=texture2D(tDiffuse,clamp(sampleUv,0.001,0.999)).rgb; float brightness=max(max(sampleColor.r,sampleColor.g),sampleColor.b); rays+=max(brightness-0.72,0.0)*decay; decay*=0.96; } vec3 base=texture2D(tDiffuse,vUv).rgb; gl_FragColor=vec4(base+rays*uIntensity*vec3(1.0,0.78,0.48),1.0); }'
+            });
+            godRaysPass.enabled = false;
+            composer.addPass(godRaysPass);
+            heatDistortionPass = new THREE.ShaderPass({
+                uniforms: {
+                    tDiffuse: { value: null },
+                    uTime: { value: 0 },
+                    uCenter: { value: new THREE.Vector2(0.5, 0.5) },
+                    uImpact: { value: 0 },
+                    uImpactCenter: { value: new THREE.Vector2(0.5, 0.5) },
+                    uAnomaly: { value: 0 }
+                },
+                vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+                fragmentShader: 'uniform sampler2D tDiffuse; uniform float uTime; uniform float uImpact; uniform float uAnomaly; uniform vec2 uCenter; uniform vec2 uImpactCenter; varying vec2 vUv; void main(){ vec2 p=(vUv-uCenter)/vec2(0.19,0.17); float heatMask=1.0-smoothstep(0.25,1.0,length(p)); vec2 ip=(vUv-uImpactCenter)/vec2(0.62,0.52); float impactMask=(1.0-smoothstep(0.18,1.0,length(ip)))*max(uImpact,uAnomaly); float wave=sin(vUv.y*210.0+uTime*8.0+sin(vUv.x*35.0+uTime*3.0)); float glitch=step(0.86,sin(vUv.y*95.0+uTime*31.0))*uAnomaly; float ripple=wave*(0.0018*heatMask+impactMask*(0.012+uAnomaly*0.018))+glitch*0.012; vec2 uv=clamp(vUv+vec2(ripple,ripple*0.22),0.001,0.999); vec2 chroma=vec2(0.006*uAnomaly+impactMask*0.004,0.0); vec4 base=texture2D(tDiffuse,uv); vec3 split=vec3(texture2D(tDiffuse,clamp(uv+chroma,0.001,0.999)).r,base.g,texture2D(tDiffuse,clamp(uv-chroma,0.001,0.999)).b); gl_FragColor=vec4(mix(base.rgb,split,clamp(uAnomaly+uImpact*0.35,0.0,1.0)),base.a); }'
+            });
+            composer.addPass(heatDistortionPass);
+        }
+
+        function setupLighting() {
+            ambientLight = new THREE.AmbientLight(0x402b1c, 1.4);
+            scene.add(ambientLight);
+
+            keyLight = new THREE.DirectionalLight(0xffb56b, 1.8);
+            keyLight.position.set(15, 28, 12);
+            keyLight.castShadow = GameSave.data.shadows;
+            keyLight.shadow.mapSize.width = 2048;
+            keyLight.shadow.mapSize.height = 2048;
+            scene.add(keyLight);
+        }
+
+        function setupDimensionRift() {
+            const gridCanvas = document.createElement('canvas');
+            gridCanvas.width = 256;
+            gridCanvas.height = 256;
+            const gridContext = gridCanvas.getContext('2d');
+            gridContext.fillStyle = '#060b1b';
+            gridContext.fillRect(0, 0, 256, 256);
+            const hexRadius = 19;
+            const hexWidth = Math.sqrt(3) * hexRadius;
+            const hexHeight = hexRadius * 1.5;
+            gridContext.lineWidth = 1.6;
+            for (let row = -1; row < 12; row++) {
+                for (let column = -1; column < 12; column++) {
+                    const centerX = column * hexWidth + (row % 2) * hexWidth * 0.5;
+                    const centerY = row * hexHeight;
+                    gridContext.beginPath();
+                    for (let point = 0; point <= 6; point++) {
+                        const angle = Math.PI / 3 * point;
+                        const x = centerX + hexRadius * Math.cos(angle);
+                        const y = centerY + hexRadius * Math.sin(angle);
+                        if (point === 0) gridContext.moveTo(x, y);
+                        else gridContext.lineTo(x, y);
+                    }
+                    gridContext.strokeStyle = (row + column) % 4 === 0
+                        ? 'rgba(255,53,211,.88)'
+                        : 'rgba(42,221,255,.82)';
+                    gridContext.stroke();
+                }
+            }
+            cyberGridTexture = new THREE.CanvasTexture(gridCanvas);
+            cyberGridTexture.wrapS = THREE.RepeatWrapping;
+            cyberGridTexture.wrapT = THREE.RepeatWrapping;
+            cyberGridTexture.repeat.set(3, 18);
+            cyberGridTexture.encoding = THREE.sRGBEncoding;
+            cyberGridTexture.needsUpdate = true;
+
+            const riftShape = new THREE.Shape();
+            riftShape.moveTo(-0.2, -13);
+            riftShape.lineTo(0.18, -9);
+            riftShape.lineTo(-0.32, -6);
+            riftShape.lineTo(0.72, -3);
+            riftShape.lineTo(-0.15, 0);
+            riftShape.lineTo(0.45, 3.2);
+            riftShape.lineTo(-0.55, 6);
+            riftShape.lineTo(0.28, 9.5);
+            riftShape.lineTo(-0.18, 13);
+            riftShape.lineTo(0.18, 13);
+            riftShape.lineTo(-0.08, 9.5);
+            riftShape.lineTo(0.65, 6);
+            riftShape.lineTo(-0.35, 3.2);
+            riftShape.lineTo(0.2, 0);
+            riftShape.lineTo(-0.62, -3);
+            riftShape.lineTo(0.38, -6);
+            riftShape.lineTo(-0.12, -9);
+            riftShape.lineTo(0.2, -13);
+            const riftGeometry = new THREE.ShapeGeometry(riftShape, 2);
+            dimensionRiftMaterial = new THREE.ShaderMaterial({
+                transparent: true,
+                depthWrite: false,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending,
+                uniforms: { uTime: { value: 0 }, uOpacity: { value: 0 } },
+                vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+                fragmentShader: 'varying vec2 vUv; uniform float uTime; uniform float uOpacity; void main(){ float pulse=.68+.32*sin(uTime*9.0+vUv.y*32.0); float scan=step(.73,fract(vUv.y*58.0-uTime*1.8)); vec3 color=mix(vec3(.12,.92,1.0),vec3(.75,.16,1.0),.5+.5*sin(uTime*2.7+vUv.y*8.0)); float alpha=uOpacity*(.56+.44*scan)*pulse; gl_FragColor=vec4(color,alpha); }'
+            });
+            dimensionRift = new THREE.Mesh(riftGeometry, dimensionRiftMaterial);
+            dimensionRift.rotation.x = -Math.PI / 2;
+            dimensionRift.position.set(0, 0.045, -8);
+            dimensionRift.visible = false;
+            scene.add(dimensionRift);
+
+            const signCanvas = document.createElement('canvas');
+            signCanvas.width = 512;
+            signCanvas.height = 256;
+            const signContext = signCanvas.getContext('2d');
+            signContext.fillStyle = 'rgba(4,8,27,.82)';
+            signContext.fillRect(0, 0, 512, 256);
+            signContext.strokeStyle = '#3df4ff';
+            signContext.lineWidth = 8;
+            signContext.strokeRect(10, 10, 492, 236);
+            signContext.shadowColor = '#ff35d3';
+            signContext.shadowBlur = 24;
+            signContext.fillStyle = '#a9fbff';
+            signContext.font = '900 76px Cinzel, serif';
+            signContext.textAlign = 'center';
+            signContext.fillText('AETHER', 256, 145);
+            signContext.font = 'bold 25px Cinzel, serif';
+            signContext.fillStyle = '#ff65dd';
+            signContext.fillText('VOID // 2099', 256, 205);
+            const hologramTexture = new THREE.CanvasTexture(signCanvas);
+            hologramTexture.encoding = THREE.sRGBEncoding;
+            const hologramMaterial = new THREE.MeshBasicMaterial({
+                map: hologramTexture,
+                transparent: true,
+                opacity: 0.92,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending,
+                toneMapped: false
+            });
+            cyberCollectibleMaterial = new THREE.MeshStandardMaterial({
+                color: 0x6ffaff,
+                emissive: 0x127dff,
+                emissiveIntensity: 1.65,
+                metalness: 0.82,
+                roughness: 0.2
+            });
+            cyberObstacleMaterial = new THREE.MeshStandardMaterial({
+                color: 0x20102f,
+                emissive: 0xff35d3,
+                emissiveIntensity: 0.65,
+                metalness: 0.72,
+                roughness: 0.32
+            });
+            const hologramGeometry = new THREE.PlaneGeometry(5.2, 2.8);
+            streetLamps.forEach(lamp => {
+                const sign = new THREE.Mesh(hologramGeometry, hologramMaterial);
+                sign.position.set(lamp.position.x < 0 ? 2.1 : -2.1, 8.6, 0);
+                sign.userData.isHologram = true;
+                sign.visible = false;
+                lamp.add(sign);
+            });
+
+            boilerCoreRoadFx = new THREE.Group();
+            const magmaMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff4a1f,
+                transparent: true,
+                opacity: 0.88,
+                blending: THREE.AdditiveBlending,
+                toneMapped: false
+            });
+            [-1, 0, 1].forEach((lane, index) => {
+                const curve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(lane * 2.3, 0.055, 112),
+                    new THREE.Vector3(lane * 2.1 + (index - 1) * 0.3, 0.06, 54),
+                    new THREE.Vector3(lane * 2.35, 0.055, 0),
+                    new THREE.Vector3(lane * 2.05 - (index - 1) * 0.25, 0.06, -56),
+                    new THREE.Vector3(lane * 2.3, 0.055, -112)
+                ]);
+                boilerCoreRoadFx.add(new THREE.Mesh(
+                    new THREE.TubeGeometry(curve, 90, index === 1 ? 0.12 : 0.085, 5, false),
+                    magmaMaterial
+                ));
+            });
+            boilerCoreRoadFx.visible = false;
+            scene.add(boilerCoreRoadFx);
+        }
+
+        function setupVictorianStreet() {
+            const streetGroup = new THREE.Group();
+
+            const roadGeo = new THREE.PlaneGeometry(14, 240);
+            const roadMat = new THREE.MeshStandardMaterial({ color: 0x343b3e, roughness: 0.31, metalness: 0.08 });
+            const road = new THREE.Mesh(roadGeo, roadMat);
+            road.rotation.x = -Math.PI / 2;
+            road.receiveShadow = true;
+            roadBaseMesh = road;
+            streetGroup.add(road);
+
+            // Wet granite paving uses a shared procedural color and relief map.
+            const { cobbleMap, reliefMap } = createProceduralTextures();
+            const cobbleMat = new THREE.MeshStandardMaterial({
+                map: cobbleMap,
+                bumpMap: reliefMap,
+                bumpScale: 0.075,
+                roughnessMap: reliefMap,
+                roughness: 0.42,
+                metalness: 0.12
+            });
+            cobblestoneTexMesh = new THREE.Mesh(roadGeo, cobbleMat);
+            cobblestoneTexMesh.rotation.x = -Math.PI / 2;
+            cobblestoneTexMesh.position.y = 0.01;
+            streetGroup.add(cobblestoneTexMesh);
+
+            // Curbs
+            const curbGeo = new THREE.BoxGeometry(0.8, 0.4, 240);
+            const curbMat = new THREE.MeshStandardMaterial({ color: 0x4a4741, roughness: 0.76, metalness: 0.04 });
+            const leftCurb = new THREE.Mesh(curbGeo, curbMat); leftCurb.position.set(-7.4, 0.2, 0);
+            const rightCurb = new THREE.Mesh(curbGeo, curbMat); rightCurb.position.set(7.4, 0.2, 0);
+            streetGroup.add(leftCurb, rightCurb);
+
+            scene.add(streetGroup);
+            createIndustrialCity();
+
+            // Gas Lamps
+            for (let z = -10; z > -210; z -= 25) {
+                spawnGasLamp(-7.4, z);
+                spawnGasLamp(7.4, z);
+            }
+            setupDimensionRift();
+        }
+
+        function createIndustrialCity() {
+            const masonryCanvas = document.createElement('canvas');
+            masonryCanvas.width = 256;
+            masonryCanvas.height = 256;
+            const masonry = masonryCanvas.getContext('2d');
+            masonry.fillStyle = '#51433a';
+            masonry.fillRect(0, 0, 256, 256);
+            masonry.strokeStyle = 'rgba(20,15,13,.7)';
+            masonry.lineWidth = 3;
+            for (let y = 0; y < 256; y += 22) {
+                const rowOffset = (y / 22) % 2 ? 28 : 0;
+                for (let x = -28; x < 256; x += 56) {
+                    const tone = 55 + Math.floor(Math.random() * 24);
+                    masonry.fillStyle = `rgb(${tone},${tone - 8},${tone - 13})`;
+                    masonry.fillRect(x + rowOffset + 2, y + 2, 52, 18);
+                    masonry.strokeRect(x + rowOffset + 2, y + 2, 52, 18);
+                }
+            }
+            const masonryMap = new THREE.CanvasTexture(masonryCanvas);
+            masonryMap.wrapS = THREE.RepeatWrapping;
+            masonryMap.wrapT = THREE.RepeatWrapping;
+            masonryMap.repeat.set(2, 3);
+            masonryMap.encoding = THREE.sRGBEncoding;
+
+            const windowCanvas = document.createElement('canvas');
+            windowCanvas.width = 64;
+            windowCanvas.height = 96;
+            const wctx = windowCanvas.getContext('2d');
+            wctx.fillStyle = '#171a20';
+            wctx.fillRect(0, 0, 64, 96);
+            wctx.fillStyle = '#aa6331';
+            wctx.fillRect(6, 6, 52, 84);
+            wctx.fillStyle = '#ffc66f';
+            wctx.fillRect(11, 11, 42, 74);
+            wctx.fillStyle = 'rgba(255,244,197,.45)';
+            wctx.fillRect(15, 15, 12, 64);
+            wctx.fillStyle = '#634324';
+            wctx.fillRect(30, 8, 4, 80);
+            wctx.fillRect(8, 46, 48, 4);
+            const windowMap = new THREE.CanvasTexture(windowCanvas);
+            windowMap.encoding = THREE.sRGBEncoding;
+
+            const brickMat = new THREE.MeshStandardMaterial({ map: masonryMap, color: 0x8e7561, roughness: 0.92, metalness: 0.02 });
+            const stoneMat = new THREE.MeshStandardMaterial({ color: 0x777166, roughness: 0.86 });
+            const ironTrimMat = new THREE.MeshStandardMaterial({ color: 0x252629, metalness: 0.62, roughness: 0.58 });
+            const windowMat = new THREE.MeshBasicMaterial({ map: windowMap, transparent: true, toneMapped: false });
+            const wallGeo = new THREE.BoxGeometry(8.5, 10.5, 14);
+            const corniceGeo = new THREE.BoxGeometry(9.1, 0.34, 14.5);
+            const sillGeo = new THREE.BoxGeometry(0.16, 0.12, 1.15);
+            const pilasterGeo = new THREE.BoxGeometry(0.36, 10.1, 0.4);
+            const windowGeo = new THREE.BoxGeometry(0.075, 1.38, 0.88);
+            const roofGeo = new THREE.ConeGeometry(5.1, 2.2, 4);
+            const skylineGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const skylineMaterial = new THREE.MeshStandardMaterial({
+                color: 0x080c20,
+                roughness: 0.34,
+                metalness: 0.78,
+                emissive: 0x07102b,
+                emissiveIntensity: 0.65
+            });
+            const skylineNeonGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const skylineNeonMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+            const aetherCrystalGeometry = new THREE.OctahedronGeometry(0.95, 1);
+            const aetherCrystalMaterial = new THREE.MeshStandardMaterial({
+                color: 0xb7dcff,
+                emissive: 0x713bff,
+                emissiveIntensity: 1.55,
+                metalness: 0.38,
+                roughness: 0.16
+            });
+
+            for (let blockIndex = 0; blockIndex < 5; blockIndex++) {
+                const block = new THREE.Group();
+                block.position.z = -18 - blockIndex * 43;
+                block.userData.baseZ = block.position.z;
+                for (const side of [-1, 1]) {
+                    const building = new THREE.Group();
+                    building.userData.isVictorianBuilding = true;
+                    building.position.x = side * 12.2;
+                    const height = 9.5 + (blockIndex % 3) * 1.1 + (side < 0 ? 0.8 : 0);
+                    const wall = new THREE.Mesh(wallGeo, brickMat);
+                    wall.position.y = height / 2;
+                    const lowerCornice = new THREE.Mesh(corniceGeo, stoneMat);
+                    lowerCornice.position.y = 0.42;
+                    const upperCornice = new THREE.Mesh(corniceGeo, ironTrimMat);
+                    upperCornice.position.y = height;
+                    const roof = new THREE.Mesh(roofGeo, ironTrimMat);
+                    roof.position.y = height + 1.05;
+                    roof.rotation.y = Math.PI / 4;
+                    building.add(wall, lowerCornice, upperCornice, roof);
+
+                    for (const zPos of [-6.25, 6.25]) {
+                        const pilaster = new THREE.Mesh(pilasterGeo, stoneMat);
+                        pilaster.position.set(-side * 4.05, height / 2, zPos);
+                        building.add(pilaster);
+                    }
+
+                    const windows = new THREE.InstancedMesh(windowGeo, windowMat, 16);
+                    const matrix = new THREE.Object3D();
+                    let windowIndex = 0;
+                    for (let row = 0; row < 4; row++) {
+                        for (let column = 0; column < 4; column++) {
+                            matrix.position.set(-side * 4.3, 1.65 + row * 1.95, -4.65 + column * 3.1);
+                            matrix.updateMatrix();
+                            windows.setMatrixAt(windowIndex++, matrix.matrix);
+                        }
+                    }
+                    windows.instanceMatrix.needsUpdate = true;
+                    building.add(windows);
+
+                    // Carved iron balconies and a restrained Art Nouveau crest.
+                    const balcony = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.1, 13.8), ironTrimMat);
+                    balcony.position.set(-side * 4.38, 1.12, 0);
+                    building.add(balcony);
+                    const crest = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.045, 6, 18), stoneMat);
+                    crest.position.set(-side * 4.42, height - 0.85, 0);
+                    crest.rotation.y = Math.PI / 2;
+                    building.add(crest);
+                    building.traverse(object => {
+                        if (object.isMesh) {
+                            object.castShadow = false;
+                            object.receiveShadow = false;
+                        }
+                    });
+                    block.add(building);
+                }
+                const skyline = new THREE.InstancedMesh(skylineGeometry, skylineMaterial, 10);
+                const neonBands = new THREE.InstancedMesh(skylineNeonGeometry, skylineNeonMaterial, 60);
+                skyline.userData.isCyberSkyline = true;
+                neonBands.userData.isCyberSkyline = true;
+                skyline.visible = false;
+                neonBands.visible = false;
+                const towerTransform = new THREE.Object3D();
+                const neonTransform = new THREE.Object3D();
+                const neonColors = [new THREE.Color(0x3df4ff), new THREE.Color(0xff35d3), new THREE.Color(0x7cff4f)];
+                let towerIndex = 0;
+                let bandIndex = 0;
+                for (const side of [-1, 1]) {
+                    for (let tower = 0; tower < 5; tower++) {
+                        const width = 4.5 + (tower * 7 + blockIndex * 3) % 4;
+                        const height = 18 + (tower * 13 + blockIndex * 9 + (side < 0 ? 8 : 0)) % 27;
+                        const depth = 5.5 + (tower % 3) * 1.4;
+                        const x = side * (21 + (tower % 3) * 2.4);
+                        const z = -17 + tower * 7.2 + ((blockIndex + tower) % 2) * 2.6;
+                        towerTransform.position.set(x, height / 2, z);
+                        towerTransform.scale.set(width, height, depth);
+                        towerTransform.updateMatrix();
+                        skyline.setMatrixAt(towerIndex++, towerTransform.matrix);
+
+                        for (let level = 0; level < 6; level++) {
+                            const y = Math.min(height - 1.1, 3.5 + level * (height / 7));
+                            neonTransform.position.set(x - side * width * 0.18, y, z + depth / 2 + 0.08);
+                            neonTransform.scale.set(width * 0.68, 0.13, 0.1);
+                            neonTransform.updateMatrix();
+                            neonBands.setMatrixAt(bandIndex, neonTransform.matrix);
+                            neonBands.setColorAt(bandIndex, neonColors[(tower + level + blockIndex) % neonColors.length]);
+                            bandIndex++;
+                        }
+                    }
+                }
+                skyline.instanceMatrix.needsUpdate = true;
+                neonBands.count = bandIndex;
+                neonBands.instanceMatrix.needsUpdate = true;
+                if (neonBands.instanceColor) neonBands.instanceColor.needsUpdate = true;
+                block.add(skyline, neonBands);
+                for (let crystalIndex = 0; crystalIndex < 4; crystalIndex++) {
+                    const crystal = new THREE.Mesh(aetherCrystalGeometry, aetherCrystalMaterial);
+                    crystal.position.set(
+                        (crystalIndex % 2 ? 1 : -1) * (9.5 + (crystalIndex % 3) * 1.4),
+                        3.2 + (crystalIndex % 3) * 1.45,
+                        -12 - crystalIndex * 7.5
+                    );
+                    crystal.scale.setScalar(0.45 + (crystalIndex % 2) * 0.24);
+                    crystal.userData.isAetherProp = true;
+                    crystal.userData.baseY = crystal.position.y;
+                    crystal.userData.phase = blockIndex + crystalIndex * 0.8;
+                    crystal.visible = false;
+                    aetherCrystals.push(crystal);
+                    block.add(crystal);
+                }
+                scene.add(block);
+                cityBlocks.push(block);
+            }
+        }
+
+        function spawnGasLamp(x, z) {
+            const lampGroup = new THREE.Group();
+            const ironMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.3 });
+            const glassMat = new THREE.MeshBasicMaterial({ color: 0xffb84f, toneMapped: false });
+
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 4.8, 8), ironMat);
+            pole.position.y = 2.4;
+            pole.userData.isVictorianLamp = true;
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), glassMat);
+            glass.position.y = 4.6;
+            glass.userData.isVictorianLamp = true;
+
+            const ray = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.08, 1.65, 5.4, 12, 1, true),
+                new THREE.MeshBasicMaterial({ color: 0xffc66b, transparent: true, opacity: 0.065, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
+            );
+            ray.position.y = 1.9;
+            ray.userData.isLampRay = true;
+            const lampGlow = new THREE.PointLight(0xffb45c, 1.7, 18, 2);
+            lampGlow.position.y = 4.55;
+            lampGlow.userData.isGasLight = true;
+            lampGroup.add(pole, glass, ray, lampGlow);
+            lampGroup.position.set(x, 0, z);
+            scene.add(lampGroup);
+            streetLamps.push(lampGroup);
+            gasLampLights.push(lampGlow);
+        }
+
+        function updateCityAndLampLighting(delta) {
+            gasLightTime += delta;
+            streetLamps.forEach((lamp, index) => {
+                const light = lamp.children.find(child => child.userData.isGasLight);
+                const ray = lamp.children.find(child => child.userData.isLampRay);
+                if (!light || !ray) return;
+                const flicker = 0.94 + Math.sin(gasLightTime * (8.5 + index % 3) + index) * 0.035 + Math.sin(gasLightTime * 19 + index * 2.7) * 0.018;
+                light.intensity = (currentDimension === 2 ? 3.2 : currentDimension === 1 ? 2.8 : 1.7) * flicker;
+                let steamNearLamp = 0;
+                for (let i = 0; i < steamParticles.length; i++) {
+                    const puff = steamParticles[i];
+                    if (!puff.visible) continue;
+                    const dx = puff.position.x - lamp.position.x;
+                    const dy = puff.position.y - 3.2;
+                    const dz = puff.position.z - lamp.position.z;
+                    if (dx * dx + dy * dy + dz * dz < 36) steamNearLamp = Math.min(1, steamNearLamp + 0.18);
+                }
+                ray.material.opacity = currentDimension > 0
+                    ? (currentDimension === 2 ? 0.18 : 0.12) + (Math.sin(gasLightTime * 6 + index) * 0.5 + 0.5) * 0.08
+                    : 0.035 + steamNearLamp * 0.035 + (Math.sin(gasLightTime * 2 + index) * 0.5 + 0.5) * 0.018;
+            });
+        }
+
+        function getCyberMaterial(material, paletteIndex) {
+            if (cyberMaterialCache.has(material)) return cyberMaterialCache.get(material);
+            const cyberMaterial = material.clone();
+            if (cyberMaterial.color) cyberMaterial.color.set(material.isMeshBasicMaterial ? cyberPalette[paletteIndex % cyberPalette.length] : 0x080c20);
+            if (cyberMaterial.map) cyberMaterial.map = null;
+            if (cyberMaterial.bumpMap) cyberMaterial.bumpMap = null;
+            if (cyberMaterial.roughnessMap) cyberMaterial.roughnessMap = null;
+            if (cyberMaterial.emissive) {
+                cyberMaterial.emissive.set(cyberPalette[paletteIndex % cyberPalette.length]);
+                cyberMaterial.emissiveIntensity = 0.34;
+                cyberMaterial.metalness = 0.86;
+                cyberMaterial.roughness = 0.24;
+            }
+            cyberMaterial.needsUpdate = true;
+            cyberMaterialCache.set(material, cyberMaterial);
+            return cyberMaterial;
+        }
+
+        function rememberPastMaterial(object) {
+            if (object.userData.pastEraMaterial) return;
+            object.userData.pastEraMaterial = Array.isArray(object.material)
+                ? object.material.slice()
+                : object.material;
+        }
+
+        function setObjectEraMaterial(object, useCyber, paletteIndex) {
+            if (useCyber) {
+                rememberPastMaterial(object);
+                object.material = Array.isArray(object.material)
+                    ? object.material.map((material, index) => getCyberMaterial(material, paletteIndex + index))
+                    : getCyberMaterial(object.material, paletteIndex);
+            } else if (object.userData.pastEraMaterial) {
+                object.material = object.userData.pastEraMaterial;
+            }
+        }
+
+        function captureVictorianWorldDefaults() {
+            if (victorianWorldDefaults) return;
+            victorianWorldDefaults = {
+                background: scene.background.clone(),
+                fogColor: scene.fog.color.clone(),
+                fogDensity: scene.fog.density,
+                ambientColor: ambientLight.color.clone(),
+                ambientIntensity: ambientLight.intensity,
+                keyColor: keyLight.color.clone(),
+                keyIntensity: keyLight.intensity,
+                roadMaterial: roadBaseMesh.material.clone(),
+                cobblestoneMaterial: cobblestoneTexMesh.material.clone(),
+                bloom: bloomPass ? {
+                    strength: bloomPass.strength,
+                    radius: bloomPass.radius,
+                    threshold: bloomPass.threshold
+                } : null,
+                godRaysEnabled: godRaysPass ? godRaysPass.enabled : false
+            };
+        }
+
+        function applyCyberWorld() {
+            if (isCyberWorld) return;
+            captureVictorianWorldDefaults();
+            currentDimension = 1;
+            isCyberWorld = true;
+            boilerCoreRoadFx.visible = false;
+            document.body.classList.remove('boiler-core');
+            document.body.classList.add('cyber-world');
+            scene.background.set(0x050014);
+            scene.fog.color.set(0x050014);
+            scene.fog.density = 0.019;
+            ambientLight.color.set(0x342070);
+            ambientLight.intensity = 1.15;
+            keyLight.color.set(0x36dfff);
+            keyLight.intensity = 2.4;
+
+            roadBaseMesh.material.color.set(0x080c20);
+            roadBaseMesh.material.roughness = 0.2;
+            roadBaseMesh.material.metalness = 0.92;
+            roadBaseMesh.material.emissive.set(0x020817);
+            roadBaseMesh.material.emissiveIntensity = 0.7;
+            roadBaseMesh.material.needsUpdate = true;
+            cobblestoneTexMesh.material.map = cyberGridTexture;
+            cobblestoneTexMesh.material.bumpMap = null;
+            cobblestoneTexMesh.material.roughnessMap = null;
+            cobblestoneTexMesh.material.color.set(0x52dbff);
+            cobblestoneTexMesh.material.roughness = 0.22;
+            cobblestoneTexMesh.material.metalness = 0.82;
+            cobblestoneTexMesh.material.emissive.set(0x06102a);
+            cobblestoneTexMesh.material.emissiveIntensity = 0.8;
+            cobblestoneTexMesh.material.needsUpdate = true;
+
+            cityBlocks.forEach((block, blockIndex) => {
+                block.traverse(object => {
+                    if (object.userData.isAetherProp) {
+                        object.visible = true;
+                    } else if (object.userData.isCyberSkyline) {
+                        object.visible = true;
+                    } else if (object.userData.isVictorianBuilding) {
+                        object.visible = false;
+                    } else if (object.isMesh) {
+                        setObjectEraMaterial(object, true, blockIndex);
+                    }
+                });
+            });
+            streetLamps.forEach((lamp, lampIndex) => {
+                lamp.children.forEach(child => {
+                    if (child.userData.isHologram) {
+                        child.visible = true;
+                        child.material.color.set(0xffffff);
+                    } else if (child.userData.isVictorianLamp) {
+                        child.visible = false;
+                    } else if (child.userData.isGasLight) {
+                        child.color.set(lampIndex % 2 ? 0xff35d3 : 0x3df4ff);
+                        child.intensity = 2.8;
+                    } else if (child.userData.isLampRay) {
+                        child.material.color.set(lampIndex % 2 ? 0xff35d3 : 0x3df4ff);
+                        child.material.opacity = 0.16;
+                    } else if (child.isMesh) {
+                        setObjectEraMaterial(child, true, lampIndex);
+                    }
+                });
+            });
+            obstacles.forEach(obstacle => {
+                obstacle.material.dispose();
+                obstacle.material = cyberObstacleMaterial.clone();
+            });
+            if (bloomPass) {
+                bloomPass.strength = 1.15;
+                bloomPass.radius = 0.62;
+                bloomPass.threshold = 0.24;
+            }
+            if (godRaysPass) godRaysPass.enabled = false;
+            audioFX.setCyberMode(true);
+            steamParticles.forEach(particle => {
+                particle.material.color.set(0x43bfff);
+                particle.material.blending = THREE.AdditiveBlending;
+                particle.material.depthWrite = false;
+                particle.material.toneMapped = false;
+                particle.material.needsUpdate = true;
+            });
+            sparkParticles.forEach(particle => {
+                if (!particle.userData.pastEraColor) particle.userData.pastEraColor = particle.material.color.clone();
+                particle.material.color.set(0x3df4ff);
+            });
+            dustParticles.forEach(particle => {
+                if (!particle.userData.pastEraColor) particle.userData.pastEraColor = particle.material.color.clone();
+                particle.material.color.set(0x347cff);
+            });
+        }
+
+        function createVictorianObstacleMaterial(obstacle) {
+            return obstacle.userData.type === 'vent_high'
+                ? new THREE.MeshStandardMaterial({ color: 0x8a5218, metalness: 0.8 })
+                : new THREE.MeshStandardMaterial({ color: 0x4a321a, roughness: 0.6 });
+        }
+
+        function createObstacleMaterial(type) {
+            if (currentDimension === 0) {
+                return createVictorianObstacleMaterial({ userData: { type } });
+            }
+            if (currentDimension === 1) return cyberObstacleMaterial.clone();
+            return new THREE.MeshStandardMaterial({
+                color: 0x35120d, emissive: 0xff3d12, emissiveIntensity: 1.15,
+                metalness: 0.74, roughness: 0.25
+            });
+        }
+
+        function applyVictorianWorld() {
+            if (currentDimension === 0) return;
+            currentDimension = 0;
+            isCyberWorld = false;
+            document.body.classList.remove('cyber-world');
+            document.body.classList.remove('boiler-core');
+            if (boilerCoreRoadFx) boilerCoreRoadFx.visible = false;
+            if (victorianWorldDefaults) {
+                scene.background.copy(victorianWorldDefaults.background);
+                scene.fog.color.copy(victorianWorldDefaults.fogColor);
+                scene.fog.density = victorianWorldDefaults.fogDensity;
+                ambientLight.color.copy(victorianWorldDefaults.ambientColor);
+                ambientLight.intensity = victorianWorldDefaults.ambientIntensity;
+                keyLight.color.copy(victorianWorldDefaults.keyColor);
+                keyLight.intensity = victorianWorldDefaults.keyIntensity;
+                roadBaseMesh.material.copy(victorianWorldDefaults.roadMaterial);
+                cobblestoneTexMesh.material.copy(victorianWorldDefaults.cobblestoneMaterial);
+                if (bloomPass && victorianWorldDefaults.bloom) {
+                    bloomPass.strength = victorianWorldDefaults.bloom.strength;
+                    bloomPass.radius = victorianWorldDefaults.bloom.radius;
+                    bloomPass.threshold = victorianWorldDefaults.bloom.threshold;
+                }
+                if (godRaysPass) godRaysPass.enabled = victorianWorldDefaults.godRaysEnabled;
+            }
+
+            cityBlocks.forEach(block => {
+                block.traverse(object => {
+                    if (object.userData.isAetherProp) {
+                        object.visible = false;
+                    } else if (object.userData.isCyberSkyline) {
+                        object.visible = false;
+                    } else if (object.userData.isVictorianBuilding) {
+                        object.visible = true;
+                    } else if (object.isMesh) {
+                        setObjectEraMaterial(object, false, 0);
+                    }
+                });
+            });
+            streetLamps.forEach(lamp => {
+                lamp.children.forEach(child => {
+                    if (child.userData.isHologram) {
+                        child.visible = false;
+                    } else if (child.userData.isVictorianLamp) {
+                        child.visible = true;
+                    } else if (child.userData.isGasLight) {
+                        child.color.set(0xffb45c);
+                        child.intensity = 1.7;
+                    } else if (child.userData.isLampRay) {
+                        child.material.color.set(0xffc66b);
+                        child.material.opacity = 0.065;
+                    } else if (child.isMesh) {
+                        setObjectEraMaterial(child, false, 0);
+                    }
+                });
+            });
+            obstacles.forEach(obstacle => {
+                obstacle.material.dispose();
+                obstacle.material = createVictorianObstacleMaterial(obstacle);
+            });
+            audioFX.setCyberMode(false);
+            steamParticles.forEach(particle => {
+                if (particle.userData.pastEraMaterial) particle.material.copy(particle.userData.pastEraMaterial);
+            });
+            sparkParticles.forEach(particle => {
+                if (particle.userData.pastEraColor) particle.material.color.copy(particle.userData.pastEraColor);
+            });
+            dustParticles.forEach(particle => {
+                if (particle.userData.pastEraColor) particle.material.color.copy(particle.userData.pastEraColor);
+            });
+        }
+
+        function applyBoilerCoreWorld() {
+            applyVictorianWorld();
+            applyCyberWorld();
+            currentDimension = 2;
+            isCyberWorld = false;
+            document.body.classList.remove('cyber-world');
+            document.body.classList.add('boiler-core');
+            cityBlocks.forEach(block => block.traverse(object => {
+                if (object.userData.isAetherProp) object.visible = false;
+            }));
+            scene.background.set(0x1b0509);
+            scene.fog.color.set(0x2a080d);
+            scene.fog.density = 0.024;
+            ambientLight.color.set(0x7d1e16);
+            ambientLight.intensity = 1.3;
+            keyLight.color.set(0xff5726);
+            keyLight.intensity = 2.65;
+            roadBaseMesh.material.color.set(0x19090b);
+            roadBaseMesh.material.roughness = 0.28;
+            roadBaseMesh.material.metalness = 0.78;
+            roadBaseMesh.material.emissive.set(0x5d1208);
+            roadBaseMesh.material.emissiveIntensity = 0.55;
+            cobblestoneTexMesh.material.color.set(0xff5124);
+            cobblestoneTexMesh.material.roughness = 0.3;
+            cobblestoneTexMesh.material.metalness = 0.75;
+            cobblestoneTexMesh.material.emissive.set(0x8e1708);
+            cobblestoneTexMesh.material.emissiveIntensity = 1.05;
+            cobblestoneTexMesh.material.needsUpdate = true;
+            boilerCoreRoadFx.visible = true;
+            streetLamps.forEach((lamp, index) => {
+                lamp.children.forEach(child => {
+                    if (child.userData.isGasLight) {
+                        child.color.set(0xff4b1f);
+                        child.intensity = 3.2;
+                    } else if (child.userData.isLampRay) {
+                        child.material.color.set(0xff341c);
+                        child.material.opacity = 0.2;
+                    } else if (child.userData.isHologram) {
+                        child.material.color.set(0xff4624);
+                    }
+                });
+            });
+            if (bloomPass) {
+                bloomPass.strength = 1.55;
+                bloomPass.radius = 0.72;
+                bloomPass.threshold = 0.18;
+            }
+            if (godRaysPass) godRaysPass.enabled = false;
+            audioFX.setCyberMode(true);
+            obstacles.forEach(obstacle => {
+                obstacle.material.dispose();
+                obstacle.material = new THREE.MeshStandardMaterial({
+                    color: 0x35120d, emissive: 0xff3d12, emissiveIntensity: 1.15,
+                    metalness: 0.74, roughness: 0.25
+                });
+            });
+        }
+
+        function updateCyberPulse(time) {
+            cyberCircuitMaterials.forEach((material, index) => {
+                material.color.setHSL(index === 0 ? 0.52 : 0.86, 1, 0.48 + Math.sin(time * 3.2 + index) * 0.16);
+            });
+            steamParticles.forEach((particle, index) => {
+                if (!particle.visible) return;
+                particle.material.color.setHSL(0.54 + Math.sin(time * 4 + index) * 0.035, 1, 0.55 + Math.sin(time * 5 + index) * 0.12);
+            });
+        }
+
+        function triggerDimensionShift(target = (currentDimension + 1) % 3) {
+            if (isDimensionTransition || !vehicleGroup || target === currentDimension) return;
+            isDimensionTransition = true;
+            dimensionTarget = target;
+            dimensionWorldApplied = false;
+            dimensionTransitionElapsed = 0;
+            transitionCameraPosition.copy(camera.position);
+            keyState['ShiftLeft'] = false;
+            keyState['ShiftRight'] = false;
+            keyState.MobileBoost = false;
+            keyState.TouchBoost = false;
+            isBoosting = false;
+            boostWasActive = false;
+            audioFX.stopBoostRumble();
+            audioFX.setMusicBoost(false);
+            if (dimensionRift) dimensionRift.visible = true;
+            const eraNames = [
+                '1900 // VICTORIAN INDUSTRIAL CITY',
+                'AETHER VOID // NEON STEAMPUNK',
+                'OVERCLOCKED BOILER CORE'
+            ];
+            document.getElementById('dimension-title-era').textContent = eraNames[target];
+            document.getElementById('dimension-glitch').classList.add('is-active');
+            pulseImpact(0.9, new THREE.Vector3(0, 0.1, -8));
+
+            streetLamps.forEach(lamp => {
+                emitDimensionFragments(lamp.position.x, 3.5, lamp.position.z, 3, 0x9b7aff);
+            });
+            for (let i = 0; i < 21; i++) {
+                const z = -1 - Math.random() * 18;
+                emitDimensionFragments((Math.random() - 0.5) * 10, 0.12, z, 1, i % 2 ? 0x3df4ff : 0xb94cff);
+            }
+            emitDimensionFragments(posX, 1.7, -0.2, 8, 0x72eaff);
+        }
+
+        function updateDimensionTransition(frameDelta) {
+            if (!isDimensionTransition || gameState !== GAME_STATES.PLAYING) return;
+            const delta = Math.min(frameDelta, 0.06);
+            dimensionTransitionElapsed = Math.min(4, dimensionTransitionElapsed + delta);
+            const progress = dimensionTransitionElapsed / 4;
+            const smooth = value => value * value * (3 - 2 * value);
+            cinematicFocus.set(0, 1.65, -0.2);
+            vehicleGroup.localToWorld(cinematicFocus);
+
+            if (progress < 0.35) {
+                const zoom = smooth(progress / 0.35);
+                cinematicCloseCamera.set(posX * 0.35, 2.55, 4.15);
+                camera.position.lerpVectors(transitionCameraPosition, cinematicCloseCamera, zoom);
+                camera.lookAt(cinematicFocus);
+                camera.fov = THREE.MathUtils.lerp(getBaseCameraFov(), 78, zoom);
+            } else if (progress < 0.74) {
+                const plunge = smooth((progress - 0.35) / 0.39);
+                cinematicCloseCamera.set(posX * 0.35, 2.55, 4.15);
+                camera.position.lerpVectors(cinematicCloseCamera, cinematicRiftCamera, plunge);
+                camera.lookAt(0, 0.05, -8);
+                camera.fov = THREE.MathUtils.lerp(78, 64, plunge);
+            } else {
+                const returnProgress = smooth((progress - 0.74) / 0.26);
+                camera.position.lerpVectors(cinematicRiftCamera, cameraTargetPos, returnProgress);
+                camera.lookAt(posX * 0.25, 1.4, -6);
+                camera.fov = THREE.MathUtils.lerp(64, getBaseCameraFov(), returnProgress);
+            }
+
+            camera.updateProjectionMatrix();
+            if (dimensionRiftMaterial) {
+                dimensionRiftMaterial.uniforms.uTime.value = clock.elapsedTime;
+                dimensionRiftMaterial.uniforms.uOpacity.value = Math.sin(Math.min(1, progress * 2.2) * Math.PI * 0.5) * (progress > 0.8 ? 1 - (progress - 0.8) / 0.2 : 1);
+            }
+            heatDistortionPass.uniforms.uTime.value = clock.elapsedTime;
+            heatDistortionPass.uniforms.uAnomaly.value = Math.sin(progress * Math.PI);
+            updateImpactEffects(delta);
+            updateSteamParticles(delta);
+
+            if (progress >= 0.54 && !dimensionWorldApplied) {
+                clearCollectiblesForDimensionShift();
+                applyVictorianWorld();
+                if (dimensionTarget === 1) applyCyberWorld();
+                else if (dimensionTarget === 2) applyBoilerCoreWorld();
+                dimensionWorldApplied = true;
+                document.getElementById('dimension-title').classList.add('is-visible');
+            }
+            if (progress >= 0.93) {
+                document.getElementById('dimension-title').classList.remove('is-visible');
+                document.getElementById('dimension-glitch').classList.remove('is-active');
+            }
+            if (dimensionTransitionElapsed >= 4) {
+                isDimensionTransition = false;
+                if (dimensionRift) dimensionRift.visible = false;
+                heatDistortionPass.uniforms.uAnomaly.value = 0;
+                cameraTargetPos.set(posX * 0.45, 4.3 + posY * 0.22, 9.5);
+                camera.position.copy(cameraTargetPos);
+                camera.lookAt(posX * 0.25, 1.4, -6);
+                camera.fov = getBaseCameraFov();
+                camera.updateProjectionMatrix();
+            }
+        }
+
+        // ==========================================
+        // 6. DETAILED 3D STEAMROLLER MODEL BUILDER
+        // ==========================================
+        function createSteamrollerCharacter() {
+            vehicleGroup = new THREE.Group();
+
+            const { brassTex, ironTex, fireTex } = createProceduralTextures();
+
+            // Materials
+            const brassMat = new THREE.MeshStandardMaterial({ map: brassTex, bumpMap: brassTex, bumpScale: 0.025, color: 0xc6a25c, roughness: 0.39, metalness: 0.76 });
+            const darkIronMat = new THREE.MeshStandardMaterial({ map: ironTex, bumpMap: ironTex, bumpScale: 0.045, color: 0x777b7b, roughness: 0.78, metalness: 0.72 });
+            const copperMat = new THREE.MeshStandardMaterial({ color: 0x9d5736, roughness: 0.52, metalness: 0.72 });
+            const fireboxMat = new THREE.MeshBasicMaterial({ map: fireTex });
+            const lanternGlassMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+
+            // A. Main Boiler Cylinder (Horizontal)
+            const boilerGeo = new THREE.CylinderGeometry(0.9, 0.9, 2.4, 20);
+            const boiler = new THREE.Mesh(boilerGeo, brassMat);
+            boiler.rotation.z = Math.PI / 2;
+            boiler.position.set(0, 1.6, -0.2);
+            boiler.castShadow = true;
+            vehicleGroup.add(boiler);
+
+            // Boiler Rivet Bands
+            for (let rX of [-0.9, 0, 0.9]) {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.04, 8, 24), copperMat);
+                band.rotation.y = Math.PI / 2;
+                band.position.set(rX, 1.6, -0.2);
+                vehicleGroup.add(band);
+            }
+
+            // Firebox Grate Core (Under/Back of Boiler)
+            fireboxGrateMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.7), fireboxMat);
+            fireboxGrateMesh.position.set(0, 1.25, 0.95);
+            fireboxGrateMesh.rotation.x = -Math.PI / 12;
+            vehicleGroup.add(fireboxGrateMesh);
+
+            // B. Dual Smokestacks (Chimneys)
+            const stackGeo = new THREE.CylinderGeometry(0.18, 0.14, 1.4, 12);
+            const leftStack = new THREE.Mesh(stackGeo, darkIronMat);
+            leftStack.position.set(-0.55, 2.7, -0.9);
+            const rightStack = new THREE.Mesh(stackGeo, darkIronMat);
+            rightStack.position.set(0.55, 2.7, -0.9);
+
+            const lipGeo = new THREE.TorusGeometry(0.19, 0.04, 8, 16);
+            const leftLip = new THREE.Mesh(lipGeo, copperMat);
+            leftLip.rotation.x = Math.PI / 2; leftLip.position.set(-0.55, 3.4, -0.9);
+            const rightLip = new THREE.Mesh(lipGeo, copperMat);
+            rightLip.rotation.x = Math.PI / 2; rightLip.position.set(0.55, 3.4, -0.9);
+
+            vehicleGroup.add(leftStack, rightStack, leftLip, rightLip);
+
+            // C. Heavy Front Metallic Roller Drum
+            const rollerGroup = new THREE.Group();
+            const drumGeo = new THREE.CylinderGeometry(0.95, 0.95, 2.3, 24);
+            rollerDrum = new THREE.Mesh(drumGeo, darkIronMat);
+            rollerDrum.rotation.z = Math.PI / 2;
+            rollerDrum.castShadow = true;
+            rollerGroup.add(rollerDrum);
+
+            // Heavy Iron Yoke / Fork
+            const forkGeo = new THREE.BoxGeometry(2.5, 0.25, 0.4);
+            const fork = new THREE.Mesh(forkGeo, darkIronMat);
+            fork.position.set(0, 0, -0.9);
+            vehicleGroup.add(fork);
+
+            rollerGroup.position.set(0, 0.95, -1.8);
+            vehicleGroup.add(rollerGroup);
+
+            // D. Rear Heavy Tread Wheels
+            const rearWheelGeo = new THREE.CylinderGeometry(0.9, 0.9, 0.55, 20);
+            rearWheelLeft = new THREE.Mesh(rearWheelGeo, darkIronMat);
+            rearWheelLeft.rotation.z = Math.PI / 2;
+            rearWheelLeft.position.set(-1.45, 0.9, 0.9);
+            rearWheelLeft.castShadow = true;
+
+            rearWheelRight = new THREE.Mesh(rearWheelGeo, darkIronMat);
+            rearWheelRight.rotation.z = Math.PI / 2;
+            rearWheelRight.position.set(1.45, 0.9, 0.9);
+            rearWheelRight.castShadow = true;
+
+            vehicleGroup.add(rearWheelLeft, rearWheelRight);
+
+            // E. Mechanical Piston Rods (Animated)
+            const pistonGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.2, 10);
+            leftPiston = new THREE.Mesh(pistonGeo, copperMat);
+            leftPiston.rotation.x = Math.PI / 2;
+            leftPiston.position.set(-1.0, 1.3, -0.8);
+
+            rightPiston = new THREE.Mesh(pistonGeo, copperMat);
+            rightPiston.rotation.x = Math.PI / 2;
+            rightPiston.position.set(1.0, 1.3, -0.8);
+
+            vehicleGroup.add(leftPiston, rightPiston);
+
+            // F. Side Gear Assemblies
+            const gearGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.08, 12);
+            sideGearLeft = new THREE.Mesh(gearGeo, brassMat);
+            sideGearLeft.rotation.x = Math.PI / 2; sideGearLeft.position.set(-1.22, 1.7, -0.2);
+            
+            sideGearRight = new THREE.Mesh(gearGeo, brassMat);
+            sideGearRight.rotation.x = Math.PI / 2; sideGearRight.position.set(1.22, 1.7, -0.2);
+
+            vehicleGroup.add(sideGearLeft, sideGearRight);
+
+            // G. Victorian Driver Canopy Cabin
+            const cabinRoof = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.1, 1.8), darkIronMat);
+            cabinRoof.position.set(0, 3.1, 0.5);
+
+            for (let pillarX of [-0.95, 0.95]) {
+                for (let pillarZ of [-0.3, 1.3]) {
+                    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8), copperMat);
+                    pillar.position.set(pillarX, 2.35, pillarZ);
+                    vehicleGroup.add(pillar);
+                }
+            }
+            vehicleGroup.add(cabinRoof);
+
+            // H. Lantern Side-Lights
+            const lanternGeo = new THREE.BoxGeometry(0.3, 0.45, 0.3);
+            const leftLantern = new THREE.Mesh(lanternGeo, lanternGlassMat);
+            leftLantern.position.set(-1.1, 2.3, -1.1);
+            const rightLantern = new THREE.Mesh(lanternGeo, lanternGlassMat);
+            rightLantern.position.set(1.1, 2.3, -1.1);
+
+            vehicleGroup.add(leftLantern, rightLantern);
+
+            heatHazeMaterial = new THREE.ShaderMaterial({
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                uniforms: { uTime: { value: 0 }, uStrength: { value: 0.22 } },
+                vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+                fragmentShader: 'varying vec2 vUv; uniform float uTime; uniform float uStrength; void main(){ float wave=sin(vUv.y*24.0+uTime*5.0+sin(vUv.x*17.0+uTime*2.0))*0.5+0.5; float edge=smoothstep(0.0,0.28,vUv.x)*(1.0-smoothstep(0.72,1.0,vUv.x)); float alpha=wave*edge*(0.075+uStrength*0.12); gl_FragColor=vec4(0.58,0.77,0.88,alpha); }'
+            });
+            heatHaze = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.8), heatHazeMaterial);
+            heatHaze.position.set(0, 4.05, -0.9);
+            vehicleGroup.add(heatHaze);
+
+            scene.add(vehicleGroup);
+        }
+
+        // ==========================================
+        // 7. PROCEDURAL STEAM PARTICLE EMITTER
+        // ==========================================
+        function setupSteamParticleSystem() {
+            const pGeo = new THREE.SphereGeometry(0.2, 8, 8);
+            const pMat = new THREE.MeshBasicMaterial({ color: 0xdddddd, transparent: true, opacity: 0.45 });
+
+            for (let i = 0; i < MAX_STEAM_PARTICLES; i++) {
+                const particle = new THREE.Mesh(pGeo, pMat.clone());
+                particle.visible = false;
+                particle.userData = { life: 0, maxLife: 1, vx: 0, vy: 0, vz: 0 };
+                scene.add(particle);
+                steamParticles.push(particle);
+            }
+            for (let i = 0; i < MAX_SPARK_PARTICLES; i++) {
+                const spark = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffb21c, transparent: true, opacity: 1 }));
+                spark.visible = false;
+                spark.userData = { life: 0, maxLife: 1, vx: 0, vy: 0, vz: 0 };
+                scene.add(spark);
+                sparkParticles.push(spark);
+            }
+            for (let i = 0; i < MAX_DUST_PARTICLES; i++) {
+                const dust = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), new THREE.MeshBasicMaterial({ color: 0x9a7960, transparent: true, opacity: 0.25, depthWrite: false }));
+                dust.visible = false;
+                dust.userData = { life: 0, maxLife: 1, vx: 0, vy: 0, vz: 0 };
+                scene.add(dust);
+                dustParticles.push(dust);
+            }
+            const moteGeo = new THREE.SphereGeometry(0.035, 5, 5);
+            for (let i = 0; i < MAX_ATMOSPHERIC_MOTES; i++) {
+                const mote = new THREE.Mesh(moteGeo, new THREE.MeshBasicMaterial({
+                    color: i % 3 === 0 ? 0xffc477 : 0xb8a38b,
+                    transparent: true,
+                    opacity: 0.16 + Math.random() * 0.1,
+                    depthWrite: false,
+                    toneMapped: false
+                }));
+                mote.position.set((Math.random() - 0.5) * 17, 0.7 + Math.random() * 5.2, -95 + Math.random() * 110);
+                mote.userData.drift = 0.3 + Math.random() * 0.8;
+                scene.add(mote);
+                atmosphericMotes.push(mote);
+            }
+            const fragmentGeo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+            const fragmentColors = [0xffc64a, 0xff762e, 0xb9c5cf, 0x9d5a31];
+            for (let i = 0; i < MAX_IMPACT_PARTICLES; i++) {
+                const material = new THREE.MeshBasicMaterial({
+                    color: fragmentColors[i % fragmentColors.length],
+                    transparent: true,
+                    opacity: 0,
+                    depthWrite: false,
+                    toneMapped: false
+                });
+                const fragment = new THREE.Mesh(fragmentGeo, material);
+                fragment.visible = false;
+                fragment.userData = { life: 0, maxLife: 1, vx: 0, vy: 0, vz: 0 };
+                scene.add(fragment);
+                impactParticles.push(fragment);
+            }
+            const ringGeo = new THREE.TorusGeometry(0.65, 0.035, 6, 40);
+            for (let i = 0; i < 3; i++) {
+                const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({
+                    color: i === 1 ? 0xffa43a : 0xffdc83,
+                    transparent: true,
+                    opacity: 0,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending,
+                    toneMapped: false
+                }));
+                ring.rotation.x = Math.PI / 2;
+                ring.visible = false;
+                ring.userData = { life: 0, maxLife: 0.9, delay: i * 0.075 };
+                scene.add(ring);
+                shockwaveRings.push(ring);
+            }
+        }
+
+        function emitSteamParticle(x, y, z, isBoost) {
+            const p = steamParticles.find(p => !p.visible);
+            if (!p) return;
+
+            p.visible = true;
+            p.position.set(x, y, z);
+            p.scale.setScalar(0.4 + Math.random() * 0.3);
+            p.material.opacity = isBoost ? 0.7 : 0.45;
+            p.material.color.set(currentDimension === 1
+                ? (isBoost ? 0x62f5ff : 0x4aa8ff)
+                : currentDimension === 2 ? (isBoost ? 0xff6a26 : 0xff381c) : 0xdddddd);
+
+            p.userData.life = 0;
+            p.userData.maxLife = 0.6 + Math.random() * 0.4;
+            p.userData.vx = (Math.random() - 0.5) * 0.8;
+            p.userData.vy = 2.5 + Math.random() * 2.0 + (isBoost ? 2.0 : 0);
+            p.userData.vz = currentSpeed * 0.6; // Puff backwards relative to motion
+            p.userData.phase = Math.random() * Math.PI * 2;
+        }
+
+        function updateSteamParticles(delta) {
+            steamParticles.forEach(p => {
+                if (!p.visible) return;
+                p.userData.life += delta;
+                if (p.userData.life >= p.userData.maxLife) {
+                    p.visible = false;
+                    return;
+                }
+                const progress = p.userData.life / p.userData.maxLife;
+                p.position.x += p.userData.vx * delta;
+                p.position.y += p.userData.vy * delta;
+                p.position.z += p.userData.vz * delta;
+                const drag = Math.exp(-GameSave.data.softness * delta * 0.075);
+                p.userData.vx *= drag;
+                const phase = (p.userData.phase || 0) + p.userData.life * 2.4;
+                p.userData.vx += Math.sin(phase) * delta * 0.36;
+                p.userData.vy = p.userData.vy * drag + delta * (0.32 + Math.sin(phase * 0.7) * 0.12);
+                p.userData.vz *= drag;
+
+                p.scale.setScalar(0.4 + progress * 2.2);
+                p.material.opacity = Math.pow(1 - progress, 1.65) * 0.52;
+            });
+        }
+
+        function emitSpark(x, y, z) {
+            const p = sparkParticles.find(item => !item.visible);
+            if (!p) return;
+            p.visible = true;
+            p.position.set(x, y, z);
+            p.material.color.set(currentDimension === 1
+                ? cyberPalette[Math.floor(Math.random() * cyberPalette.length)]
+                : currentDimension === 2 ? (Math.random() > 0.5 ? 0xff4a1f : 0xffca4a) : 0xffb21c);
+            p.scale.setScalar(0.7 + Math.random() * 1.3);
+            p.userData.life = 0;
+            p.userData.maxLife = 0.28 + Math.random() * 0.38;
+            p.userData.vx = (Math.random() - 0.5) * 2.8;
+            p.userData.vy = 3.2 + Math.random() * 5.2;
+            p.userData.vz = (Math.random() - 0.5) * 2 - 1;
+        }
+
+        function emitDust(x, y, z) {
+            const p = dustParticles.find(item => !item.visible);
+            if (!p) return;
+            p.visible = true;
+            p.position.set(x, y, z);
+            p.material.color.set(currentDimension === 1 ? 0x28d9ff : currentDimension === 2 ? 0xff3d1c : 0x9a7960);
+            p.scale.setScalar(0.35 + Math.random() * 0.45);
+            p.userData.life = 0;
+            p.userData.maxLife = 0.45 + Math.random() * 0.45;
+            p.userData.vx = (Math.random() - 0.5) * 1.4;
+            p.userData.vy = 0.25 + Math.random() * 0.9;
+            p.userData.vz = (Math.random() - 0.5) * 1.2;
+        }
+
+        function emitDimensionFragments(x, y, z, count, color) {
+            for (let i = 0; i < count; i++) {
+                const fragment = impactParticles[impactParticleCursor];
+                impactParticleCursor = (impactParticleCursor + 1) % impactParticles.length;
+                fragment.visible = true;
+                fragment.position.set(
+                    x + (Math.random() - 0.5) * 1.4,
+                    y + (Math.random() - 0.5) * 1.2,
+                    z + (Math.random() - 0.5) * 1.4
+                );
+                fragment.scale.set(0.35 + Math.random() * 0.85, 0.18 + Math.random() * 0.6, 0.25 + Math.random() * 0.75);
+                fragment.material.color.set(color);
+                fragment.userData.life = 0;
+                fragment.userData.maxLife = 1.1 + Math.random() * 1.2;
+                fragment.userData.vx = (Math.random() - 0.5) * 9;
+                fragment.userData.vy = 1.5 + Math.random() * 7;
+                fragment.userData.vz = (Math.random() - 0.5) * 8;
+                fragment.material.opacity = 0.95;
+            }
+        }
+
+        function updateEffectPool(pool, delta, opacity) {
+            pool.forEach(p => {
+                if (!p.visible) return;
+                p.userData.life += delta;
+                if (p.userData.life >= p.userData.maxLife) {
+                    p.visible = false;
+                    return;
+                }
+                const progress = p.userData.life / p.userData.maxLife;
+                p.position.x += p.userData.vx * delta;
+                p.position.y += p.userData.vy * delta;
+                p.position.z += p.userData.vz * delta;
+                const drag = Math.exp(-GameSave.data.softness * delta * (pool === dustParticles ? 0.1 : 0.045));
+                p.userData.vx *= drag;
+                const gravity = pool === sparkParticles || pool === impactParticles ? 8 : 0.3;
+                p.userData.vy = p.userData.vy * drag - delta * gravity;
+                p.userData.vz *= drag;
+                p.material.opacity = Math.pow(1 - progress, 1.7) * opacity;
+            });
+        }
+
+        function pulseImpact(strength, worldPosition) {
+            cameraShakeIntensity = Math.max(cameraShakeIntensity, strength);
+            cameraShakeVelocity.x += (Math.random() - 0.5) * strength * 2.8;
+            cameraShakeVelocity.y += strength * 1.7;
+            cameraShakeVelocity.z += strength * 0.7;
+            impactDistortion = Math.min(1, impactDistortion + strength * 0.75);
+            if (worldPosition && camera && heatDistortionPass) {
+                const screenPoint = worldPosition.clone().project(camera);
+                impactDistortionCenter.set(screenPoint.x * 0.5 + 0.5, screenPoint.y * 0.5 + 0.5);
+                heatDistortionPass.uniforms.uImpactCenter.value.copy(impactDistortionCenter);
+            }
+        }
+
+        function spawnCollisionBurst(x, y, z) {
+            const softness = GameSave.data.softness;
+            const fragmentCount = 34;
+            for (let i = 0; i < fragmentCount; i++) {
+                const fragment = impactParticles[impactParticleCursor];
+                impactParticleCursor = (impactParticleCursor + 1) % impactParticles.length;
+                fragment.visible = true;
+                fragment.position.set(x, y, z);
+                fragment.scale.setScalar(0.45 + Math.random() * 1.8);
+                fragment.userData.life = 0;
+                fragment.userData.maxLife = 0.75 + Math.random() * 0.7;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2.5 + Math.random() * 8;
+                fragment.userData.vx = Math.cos(angle) * speed;
+                fragment.userData.vy = 1.4 + Math.random() * 7.5;
+                fragment.userData.vz = Math.sin(angle) * speed;
+                fragment.material.opacity = 0.95;
+            }
+            for (let i = 0; i < 14; i++) {
+                const puff = steamParticles.find(particle => !particle.visible);
+                if (!puff) break;
+                puff.visible = true;
+                puff.position.set(x + (Math.random() - 0.5) * 1.2, y + (Math.random() - 0.5) * 0.8, z + (Math.random() - 0.5) * 1.2);
+                puff.scale.setScalar(0.8 + Math.random() * 1.1);
+                puff.userData.life = 0;
+                puff.userData.maxLife = 1.1 + Math.random() * 0.8;
+                puff.userData.vx = (Math.random() - 0.5) * 3.2;
+                puff.userData.vy = 1.4 + Math.random() * 3.5;
+                puff.userData.vz = (Math.random() - 0.5) * 3.2;
+                puff.userData.phase = Math.random() * Math.PI * 2;
+                puff.material.opacity = 0.72;
+            }
+            for (let i = 0; i < shockwaveRings.length; i++) {
+                const ring = shockwaveRings[i];
+                ring.visible = true;
+                ring.position.set(x, 0.16 + i * 0.025, z);
+                ring.scale.setScalar(0.12);
+                ring.material.opacity = 0.58;
+                ring.userData.life = 0;
+                ring.userData.delay = i * 0.075;
+            }
+            pulseImpact(Math.max(0.55, softness * 0.035), new THREE.Vector3(x, y, z));
+        }
+
+        function updateImpactEffects(delta) {
+            updateSteamParticles(delta);
+            updateEffectPool(sparkParticles, delta, 1);
+            updateEffectPool(dustParticles, delta, 0.28);
+            updateEffectPool(impactParticles, delta, 1);
+            const softness = GameSave.data.softness;
+            shockwaveRings.forEach(ring => {
+                if (!ring.visible) return;
+                if (ring.userData.delay > 0) {
+                    ring.userData.delay = Math.max(0, ring.userData.delay - delta);
+                    return;
+                }
+                ring.userData.life += delta;
+                const progress = Math.min(1, ring.userData.life / ring.userData.maxLife);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                ring.scale.setScalar(0.12 + eased * (3.4 + softness * 0.055));
+                ring.material.opacity = Math.pow(1 - progress, 2.2) * 0.58;
+                if (progress >= 1) ring.visible = false;
+            });
+            const spring = 34 + softness * 2.2;
+            const damping = Math.exp(-(7 + softness * 0.35) * delta);
+            cameraShakeVelocity.addScaledVector(cameraShakeOffset, -spring * delta);
+            cameraShakeVelocity.multiplyScalar(damping);
+            cameraShakeOffset.addScaledVector(cameraShakeVelocity, delta);
+            cameraShakeIntensity *= Math.exp(-5.5 * delta);
+            impactDistortion *= Math.exp(-4.2 * delta);
+            if (heatDistortionPass) heatDistortionPass.uniforms.uImpact.value = impactDistortion;
+        }
+
+        function showFloatingMessage(text, isCloseShave = false) {
+            const layer = document.getElementById('floating-text-layer');
+            const message = document.createElement('div');
+            message.className = `floating-message${isCloseShave ? ' close-shave' : ''}`;
+            message.textContent = currentDimension === 1
+                ? text.replace('GEARS', 'AETHER').replace(/^(\+\d+)/, '>> $1')
+                : currentDimension === 2
+                    ? text.replace('GEARS', 'MAGMA COINS')
+                    : text;
+            layer.appendChild(message);
+            message.addEventListener('animationend', () => message.remove(), { once: true });
+        }
+
+        function pulseGearCounter() {
+            const counter = document.getElementById('gear-counter');
+            counter.classList.remove('gear-pickup-juice');
+            void counter.offsetWidth;
+            counter.classList.add('gear-pickup-juice');
+        }
+
+        function createGearGeometry() {
+            const shape = new THREE.Shape();
+            const teeth = 12;
+            const points = teeth * 4;
+            for (let point = 0; point < points; point++) {
+                const angle = point / points * Math.PI * 2;
+                const toothPosition = point % 4;
+                const radius = toothPosition === 1 || toothPosition === 2 ? 0.55 : 0.43;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                if (point === 0) shape.moveTo(x, y);
+                else shape.lineTo(x, y);
+            }
+            shape.closePath();
+            const hole = new THREE.Path();
+            hole.absellipse(0, 0, 0.17, 0.17, 0, Math.PI * 2, true);
+            shape.holes.push(hole);
+            return new THREE.ExtrudeGeometry(shape, {
+                depth: 0.12,
+                bevelEnabled: true,
+                bevelSegments: 2,
+                steps: 1,
+                bevelSize: 0.035,
+                bevelThickness: 0.035,
+                curveSegments: 4
+            });
+        }
+
+        function createDimensionCollectible(dimension, kind) {
+            const item = new THREE.Group();
+            item.userData = { radius: kind === 'gear' ? 1 : 0.9, kind, dimension };
+            const addMesh = (geometry, material, scale = 1) => {
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.scale.setScalar(scale);
+                mesh.castShadow = true;
+                item.add(mesh);
+                return mesh;
+            };
+
+            if (kind === 'booster') {
+                addMesh(new THREE.IcosahedronGeometry(0.52, 1), new THREE.MeshStandardMaterial({
+                    color: 0xffc04a, emissive: 0xff5b16, emissiveIntensity: 1.8,
+                    metalness: 0.55, roughness: 0.22
+                }));
+                const ring = addMesh(new THREE.TorusGeometry(0.7, 0.055, 8, 24), new THREE.MeshBasicMaterial({
+                    color: 0xff8a2c, toneMapped: false, transparent: true, opacity: 0.8
+                }));
+                ring.rotation.x = Math.PI / 2;
+            } else if (kind === 'shield') {
+                addMesh(new THREE.DodecahedronGeometry(0.55, 0), new THREE.MeshStandardMaterial({
+                    color: 0xb9fbff, emissive: 0x3d83ff, emissiveIntensity: 1.6,
+                    metalness: 0.35, roughness: 0.16, transparent: true, opacity: 0.86
+                }));
+                addMesh(new THREE.SphereGeometry(0.67, 16, 12), new THREE.MeshBasicMaterial({
+                    color: 0x64dfff, wireframe: true, transparent: true, opacity: 0.38, toneMapped: false
+                }));
+            } else if (dimension === 1) {
+                addMesh(new THREE.OctahedronGeometry(0.58, 1), new THREE.MeshStandardMaterial({
+                    color: 0x9feaff, emissive: 0x6a36ff, emissiveIntensity: 1.8,
+                    metalness: 0.42, roughness: 0.16
+                }));
+                const tail = addMesh(new THREE.ConeGeometry(0.2, 0.85, 6), new THREE.MeshBasicMaterial({
+                    color: 0x54dfff, transparent: true, opacity: 0.58,
+                    blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false
+                }));
+                tail.position.y = -0.75;
+                tail.rotation.x = Math.PI;
+            } else if (dimension === 2) {
+                const coin = addMesh(new THREE.CylinderGeometry(0.46, 0.46, 0.16, 12), new THREE.MeshStandardMaterial({
+                    color: 0xff9a32, emissive: 0xff330d, emissiveIntensity: 1.75,
+                    metalness: 0.78, roughness: 0.2
+                }));
+                coin.rotation.x = Math.PI / 2;
+                const rim = addMesh(new THREE.TorusGeometry(0.49, 0.055, 8, 18), new THREE.MeshBasicMaterial({
+                    color: 0xff5b1f, toneMapped: false
+                }));
+                rim.rotation.x = Math.PI / 2;
+            } else {
+                addMesh(createGearGeometry(), new THREE.MeshStandardMaterial({
+                    color: 0xd4af37, metalness: 0.9, roughness: 0.2,
+                    emissive: 0x6a3808, emissiveIntensity: 0.24
+                }));
+            }
+            return item;
+        }
+
+        // ==========================================
+        // 8. FACTORIZED OBSTACLE & GEAR SPAWNER
+        // ==========================================
+        function spawnChunkEntities() {
+            const numBlocked = Math.random() > 0.6 ? 2 : 1;
+            const availableLanes = [...LANES];
+            
+            for (let i = 0; i < numBlocked; i++) {
+                const laneIdx = Math.floor(Math.random() * availableLanes.length);
+                const laneX = availableLanes.splice(laneIdx, 1)[0];
+                const isHighVent = Math.random() > 0.5;
+
+                let mesh;
+                if (isHighVent) {
+                    // Steam Vent Pipe Arch (Lower Suspension under it)
+                    mesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(3.2, 0.7, 0.5),
+                        createObstacleMaterial('vent_high')
+                    );
+                    mesh.position.set(laneX, 2.25, -125);
+                    mesh.userData = { type: 'vent_high', radius: 1.3 };
+                } else {
+                    // Clockwork Barricade Wall (Hydraulic Jump over it)
+                    mesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(2.5, 1.25, 0.8),
+                        createObstacleMaterial('barrier_low')
+                    );
+                    mesh.position.set(laneX, 0.62, -125);
+                    mesh.userData = { type: 'barrier_low', radius: 1.2 };
+                }
+                mesh.castShadow = true;
+                scene.add(mesh);
+                obstacles.push(mesh);
+            }
+
+            // Rare power-ups share the pickup path and collision handling.
+            if (availableLanes.length > 0) {
+                const openLane = availableLanes[0];
+                const roll = Math.random();
+                const kind = roll < 0.035 ? 'booster' : roll < 0.065 ? 'shield' : 'currency';
+                const collectible = createDimensionCollectible(currentDimension, kind === 'currency'
+                    ? (currentDimension === 0 ? 'gear' : currentDimension === 1 ? 'aether' : 'magma')
+                    : kind);
+                collectible.position.set(openLane, kind === 'shield' ? 1.55 : 1.2, -125);
+                collectible.userData.baseY = collectible.position.y;
+                scene.add(collectible);
+                collectibles.push(collectible);
+            }
+        }
+
+        // ==========================================
+        // 9. MAIN GAME LOOP & ANIMATION RIGGING
+        // ==========================================
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const frameDelta = clock.getDelta();
+            const delta = gameState === GAME_STATES.PLAYING && !isDimensionTransition ? Math.min(frameDelta, 0.08) : 0;
+
+            if (isRunning && !isDimensionTransition) {
+                handleInput();
+
+                // Steam Overdrive Boost
+                if (keyState['ShiftLeft'] || keyState['ShiftRight'] || keyState['TouchBoost'] || keyState['MobileBoost']) {
+                    if (boostGauge > 4) {
+                        isBoosting = true;
+                        boostGauge -= delta * (28 / GameSave.data.boostLvl);
+                        audioFX.playBoostHiss();
+                    } else { isBoosting = false; }
+                } else {
+                    isBoosting = false;
+                    boostGauge = Math.min(100, boostGauge + delta * 14);
+                }
+                if (isBoosting && !boostWasActive) {
+                    pulseImpact(0.18);
+                    audioFX.startBoostRumble();
+                } else if (!isBoosting && boostWasActive) {
+                    audioFX.stopBoostRumble();
+                }
+                boostWasActive = isBoosting;
+                audioFX.setMusicBoost(isBoosting);
+
+                const targetVelocity = BASE_SPEED + (isBoosting ? 20 : 0);
+                currentSpeed += (targetVelocity - currentSpeed) * delta * 4.5;
+                audioFX.setMusicSpeed(currentSpeed / BASE_SPEED);
+
+                // Motion Softness Interpolation (Lerp)
+                const softnessLerp = 1 - Math.exp(-GameSave.data.softness * delta);
+                posX += (targetX - posX) * softnessLerp;
+                vehicleGroup.position.x = posX;
+
+                // Jump Physics
+                if (!isGrounded) {
+                    velY += GRAVITY * delta;
+                    posY += velY * delta;
+                    if (posY <= 0) {
+                        const landingImpact = Math.min(0.8, Math.abs(velY) * 0.035);
+                        posY = 0; velY = 0; isGrounded = true;
+                        if (landingImpact > 0.18) pulseImpact(landingImpact);
+                    }
+                }
+                vehicleGroup.position.y = posY;
+
+                // Lower Suspension Mechanics
+                if (isSliding) {
+                    slideTimer -= delta;
+                    vehicleGroup.scale.y = THREE.MathUtils.lerp(vehicleGroup.scale.y, 0.5, softnessLerp);
+                    if (slideTimer <= 0) isSliding = false;
+                } else {
+                    vehicleGroup.scale.y = THREE.MathUtils.lerp(vehicleGroup.scale.y, 1.0, softnessLerp);
+                }
+
+                // Dynamic Chassis Tilt in Turns & Suspension Bounce
+                const tiltAngle = (posX - targetX) * 0.06;
+                const bounceY = Math.sin(clock.getElapsedTime() * currentSpeed * 0.6) * 0.04;
+                vehicleGroup.rotation.z = THREE.MathUtils.lerp(vehicleGroup.rotation.z, tiltAngle, softnessLerp);
+                vehicleGroup.position.y += bounceY;
+
+                // RIGGING: Rotate Wheels & Roller Drum tied to Speed
+                const rotSpeed = currentSpeed * delta * 1.8;
+                rollerDrum.rotation.x += rotSpeed;
+                rearWheelLeft.rotation.x += rotSpeed;
+                rearWheelRight.rotation.x += rotSpeed;
+
+                // RIGGING: Mechanical Pistons & Side Gears
+                const pistonCycle = Math.sin(clock.getElapsedTime() * currentSpeed * 0.7);
+                leftPiston.position.z = -0.8 + pistonCycle * 0.25;
+                rightPiston.position.z = -0.8 - pistonCycle * 0.25;
+                sideGearLeft.rotation.z += rotSpeed * 0.5;
+                sideGearRight.rotation.z -= rotSpeed * 0.5;
+
+                if (Math.abs(pistonCycle) > 0.95) audioFX.playPistonChug();
+
+                // RIGGING: Spitting Steam Particles
+                if (Math.random() < (isBoosting ? 0.95 : 0.4)) {
+                    const worldPos = new THREE.Vector3();
+                    vehicleGroup.getWorldPosition(worldPos);
+                    emitSteamParticle(worldPos.x - 0.55, worldPos.y + 3.4, worldPos.z - 0.9, isBoosting);
+                    emitSteamParticle(worldPos.x + 0.55, worldPos.y + 3.4, worldPos.z - 0.9, isBoosting);
+                    if (isBoosting && Math.random() < 0.7) {
+                        emitSpark(worldPos.x + (Math.random() - 0.5) * 0.8, worldPos.y + 3.45, worldPos.z - 0.9);
+                    }
+                }
+                if (Math.random() < 0.55) emitDust(posX + (Math.random() - 0.5) * 2.8, 0.12 + Math.random() * 0.35, 0.8 + (Math.random() - 0.5) * 2);
+                if (currentDimension === 2 && Math.random() < 0.32) {
+                    emitSpark((Math.random() - 0.5) * 12, 1.2 + Math.random() * 5, -12 - Math.random() * 30);
+                }
+                if (heatHazeMaterial) {
+                    heatHazeMaterial.uniforms.uTime.value = clock.elapsedTime;
+                    heatHazeMaterial.uniforms.uStrength.value = isBoosting ? 0.5 : 0.22;
+                    heatHaze.getWorldPosition(heatHazeScreenPosition);
+                    heatHazeScreenPosition.project(camera);
+                    heatDistortionPass.uniforms.uCenter.value.set(
+                        heatHazeScreenPosition.x * 0.5 + 0.5,
+                        heatHazeScreenPosition.y * 0.5 + 0.5
+                    );
+                    heatDistortionPass.uniforms.uTime.value = clock.elapsedTime;
+                }
+
+                // Smooth Camera Tracking + Ground Shake Impact
+                cameraTargetPos.x = posX * 0.45;
+                cameraTargetPos.y = 4.3 + posY * 0.22;
+                cameraTargetPos.z = 9.5 + (isBoosting ? 2.0 : 0);
+
+                // Scrolling Environment
+                const moveDist = currentSpeed * delta;
+                distanceTravelled += moveDist;
+                cobblestoneTexMesh.material.map.offset.y -= moveDist * 0.02;
+
+                streetLamps.forEach(lamp => {
+                    lamp.position.z += moveDist;
+                    if (lamp.position.z > 10) lamp.position.z = -200;
+                });
+                cityBlocks.forEach(block => {
+                    block.position.z += moveDist;
+                    while (block.position.z > 22) block.position.z -= 215;
+                });
+
+                // Spawning Logic
+                spawnDistanceCounter += moveDist;
+                if (spawnDistanceCounter > 28) {
+                    spawnChunkEntities();
+                    spawnDistanceCounter = 0;
+                }
+
+                updateLevelEntities(moveDist, delta);
+
+                distanceAccumulator += moveDist;
+                const wholeDistance = Math.floor(distanceAccumulator);
+                if (wholeDistance > 0) {
+                    score += wholeDistance;
+                    distanceAccumulator -= wholeDistance;
+                }
+                if (comboTimer > 0) {
+                    comboTimer -= delta;
+                    if (comboTimer <= 0) comboCount = 0;
+                }
+                if (currentDimension === 0) {
+                    const phase = (score % 1000) / 1000;
+                    const colorIndex = Math.floor(score / 1000) % atmospherePalette.length;
+                    const fromColor = atmospherePalette[colorIndex];
+                    const toColor = atmospherePalette[(colorIndex + 1) % atmospherePalette.length];
+                    const easedPhase = phase * phase * (3 - 2 * phase);
+                    atmosphereColor.copy(fromColor).lerp(toColor, easedPhase);
+                    scene.background.copy(atmosphereColor);
+                    scene.fog.color.copy(atmosphereColor);
+                    ambientLight.color.copy(atmosphereColor).lerp(ambientTint, 0.55);
+                    keyLight.color.copy(atmosphereColor).lerp(keyTint, 0.72);
+                }
+                updateHUD();
+                if (distanceTravelled >= nextDimensionShiftDistance) {
+                    while (distanceTravelled >= nextDimensionShiftDistance) {
+                        nextDimensionShiftDistance += DIMENSION_SHIFT_INTERVAL;
+                    }
+                    const target = Math.floor((nextDimensionShiftDistance - DIMENSION_SHIFT_INTERVAL) / DIMENSION_SHIFT_INTERVAL) % 3;
+                    if (target !== currentDimension) triggerDimensionShift(target);
+                }
+            }
+
+            updateImpactEffects(delta);
+            updateCityAndLampLighting(delta);
+            atmosphericMotes.forEach((mote, index) => {
+                const travel = isRunning ? currentSpeed * delta * 0.16 : 0;
+                mote.position.z += travel + delta * mote.userData.drift * 0.12;
+                mote.position.x += Math.sin(clock.elapsedTime * 0.7 + index) * delta * 0.08;
+                mote.position.y += Math.sin(clock.elapsedTime * 0.9 + index * 1.7) * delta * 0.035;
+                if (mote.position.z > 12) {
+                    mote.position.z = -105 - Math.random() * 18;
+                    mote.position.x = (Math.random() - 0.5) * 17;
+                }
+            });
+            if (currentDimension === 1) {
+                aetherCrystals.forEach(crystal => {
+                    crystal.rotation.y += delta * 0.72;
+                    crystal.rotation.x += delta * 0.28;
+                    crystal.position.y = crystal.userData.baseY + Math.sin(clock.elapsedTime * 1.8 + crystal.userData.phase) * 0.3;
+                });
+            }
+            if (isDimensionTransition) {
+                updateDimensionTransition(frameDelta);
+            } else {
+                cameraRenderTarget.copy(cameraTargetPos).add(cameraShakeOffset);
+                const cameraLerp = 1 - Math.exp(-GameSave.data.softness * delta * 0.45);
+                camera.position.lerp(cameraRenderTarget, cameraLerp);
+                camera.fov = THREE.MathUtils.lerp(camera.fov, getBaseCameraFov() + (isBoosting && isRunning ? 8 : 0), delta * 4);
+                camera.updateProjectionMatrix();
+                camera.lookAt(isRunning ? posX * 0.25 : 0, 1.4, -6);
+                if (heatHaze && heatDistortionPass) {
+                    heatHaze.getWorldPosition(heatHazeScreenPosition);
+                    heatHazeScreenPosition.project(camera);
+                    heatDistortionPass.uniforms.uCenter.value.set(
+                        heatHazeScreenPosition.x * 0.5 + 0.5,
+                        heatHazeScreenPosition.y * 0.5 + 0.5
+                    );
+                }
+            }
+            if (dimensionRiftMaterial) dimensionRiftMaterial.uniforms.uTime.value = clock.elapsedTime;
+            if (currentDimension === 1) updateCyberPulse(clock.elapsedTime);
+            if (currentDimension === 2 && boilerCoreRoadFx) {
+                boilerCoreRoadFx.children.forEach((vein, index) => {
+                    vein.material.opacity = 0.68 + Math.sin(clock.elapsedTime * 3.4 + index) * 0.2;
+                });
+            }
+            heatDistortionPass.uniforms.uImpact.value = impactDistortion;
+            composer.render();
+        }
+
+        // ==========================================
+        // 10. ENTITIES & COLLISION DETECTION
+        // ==========================================
+        function updateLevelEntities(moveDist, delta) {
+            const magnetRadius = 2.6 + (GameSave.data.magnetLvl * 1.5);
+
+            // Collectibles
+            for (let i = collectibles.length - 1; i >= 0; i--) {
+                const gear = collectibles[i];
+                gear.position.z += moveDist;
+                gear.rotation.y += delta * (gear.userData.kind === 'aether' ? 1.8 : 2.8);
+                gear.rotation.z += delta * 2.2;
+                gear.position.y = gear.userData.baseY + Math.sin(clock.elapsedTime * 2.8 + i) * 0.16;
+
+                const dx = gear.position.x - vehicleGroup.position.x;
+                const dz = gear.position.z - vehicleGroup.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < magnetRadius && dist > 0.6) {
+                    gear.position.x = THREE.MathUtils.lerp(gear.position.x, vehicleGroup.position.x, delta * 7.5);
+                }
+
+                if (dist < gear.userData.radius && Math.abs(gear.position.y - (posY + 1.1)) < 1.2) {
+                    const kind = gear.userData.kind;
+                    if (kind === 'booster') {
+                        boostGauge = 100;
+                        showFloatingMessage('STEAM OVERDRIVE READY');
+                    } else if (kind === 'shield') {
+                        shieldCharges = Math.min(1, shieldCharges + 1);
+                        showFloatingMessage('SHIELD CHARGED');
+                    } else {
+                        sessionGears++;
+                        comboCount = Math.min(5, comboCount + 1);
+                        comboTimer = 5;
+                        const reward = comboCount * 50;
+                        score += reward;
+                        showFloatingMessage(`+${reward} ${currentDimension === 0 ? 'GEARS' : currentDimension === 1 ? 'AETHER SHARDS' : 'MAGMA COINS'}`);
+                        pulseGearCounter();
+                    }
+                    audioFX.playCoinChime();
+                    scene.remove(gear);
+                    disposeSceneObject(gear);
+                    collectibles.splice(i, 1);
+                    continue;
+                }
+
+                if (gear.position.z > 10) {
+                    scene.remove(gear);
+                    disposeSceneObject(gear);
+                    collectibles.splice(i, 1);
+                }
+            }
+
+            // Obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.position.z += moveDist;
+
+                const dx = Math.abs(obs.position.x - vehicleGroup.position.x);
+                const dz = Math.abs(obs.position.z - vehicleGroup.position.z);
+
+                if (!obs.userData.nearMissShown && dz < 2.2 && dz > 0.9 && dx < obs.userData.radius + 1.15 && dx > obs.userData.radius * 0.72) {
+                    obs.userData.nearMissShown = true;
+                    showFloatingMessage('CLOSE SHAVE!', true);
+                }
+
+                if (dx < obs.userData.radius && dz < 0.85) {
+                    const isHigh = obs.userData.type === 'vent_high';
+                    if (isHigh && isSliding) {
+                        // Successfully ducked under vent
+                    } else if (!isHigh && posY > 1.15) {
+                        // Successfully jumped over barrier
+                    } else if (shieldCharges > 0) {
+                        shieldCharges--;
+                        spawnCollisionBurst(obs.position.x, Math.max(0.7, obs.position.y), obs.position.z);
+                        scene.remove(obs);
+                        disposeSceneObject(obs);
+                        obstacles.splice(i, 1);
+                        continue;
+                    } else {
+                        triggerGameOver(new THREE.Vector3(obs.position.x, Math.max(0.7, obs.position.y), obs.position.z));
+                        return;
+                    }
+                }
+
+                if (obs.position.z > 10) {
+                    scene.remove(obs);
+                    disposeSceneObject(obs);
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+
+        // ==========================================
+        // 11. INPUT & EVENT BINDINGS (KEYBOARD + TOUCH)
+        // ==========================================
+        function handleInput() {
+            if (keyState['KeyA'] || keyState['ArrowLeft']) {
+                if (currentLane > 0 && !keyState.laneLock) {
+                    currentLane--; targetX = LANES[currentLane]; keyState.laneLock = true;
+                    audioFX.playLaneClick();
+                }
+            } else if (keyState['KeyD'] || keyState['ArrowRight']) {
+                if (currentLane < LANES.length - 1 && !keyState.laneLock) {
+                    currentLane++; targetX = LANES[currentLane]; keyState.laneLock = true;
+                    audioFX.playLaneClick();
+                }
+            } else { keyState.laneLock = false; }
+
+            if ((keyState['KeyW'] || keyState['ArrowUp'] || keyState['Space'] || keyState.MobileJump) && isGrounded && !isSliding) {
+                velY = JUMP_FORCE; isGrounded = false;
+            }
+
+            if ((keyState['KeyS'] || keyState['ArrowDown'] || keyState.MobileSlide) && isGrounded && !isSliding) {
+                isSliding = true; slideTimer = 0.75;
+            }
+        }
+
+        function bindEvents() {
+            // Keyboard Listeners
+            window.addEventListener('keydown', e => { 
+                if (e.code === 'Escape' && gameState === GAME_STATES.PLAYING) {
+                    pauseGame();
+                    return;
+                }
+                if (e.code === 'KeyC' && !e.repeat && gameState === GAME_STATES.PLAYING) {
+                    e.preventDefault();
+                    triggerDimensionShift();
+                    return;
+                }
+                if (gameState !== GAME_STATES.PLAYING || deviceMode !== 'desktop') return;
+                keyState[e.code] = true;
+                audioFX.init();
+            });
+            window.addEventListener('keyup', e => { keyState[e.code] = false; });
+
+            // Touch Swipe & Hold Listeners
+            window.addEventListener('touchstart', e => {
+                if (!isRunning || deviceMode !== 'mobile' || !(e.target instanceof Element) || e.target.closest('#mobile-controls, #game-controls, button')) return;
+                audioFX.init();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchTime = Date.now();
+                keyState['TouchBoost'] = true;
+            }, { passive: true });
+
+            window.addEventListener('touchend', e => {
+                if (deviceMode !== 'mobile' || !(e.target instanceof Element) || e.target.closest('#mobile-controls, #game-controls, button')) return;
+                keyState['TouchBoost'] = false;
+                if (!isRunning) return;
+                const deltaX = e.changedTouches[0].clientX - touchStartX;
+                const deltaY = e.changedTouches[0].clientY - touchStartY;
+                const elapsedTime = Date.now() - touchTime;
+
+                if (elapsedTime < 300) {
+                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+                        if (deltaX < 0 && currentLane > 0) currentLane--;
+                        else if (deltaX > 0 && currentLane < LANES.length - 1) currentLane++;
+                        targetX = LANES[currentLane];
+                        audioFX.playLaneClick();
+                    } else if (Math.abs(deltaY) > 30) {
+                        if (deltaY < 0 && isGrounded && !isSliding) { velY = JUMP_FORCE; isGrounded = false; }
+                        else if (deltaY > 0 && isGrounded && !isSliding) { isSliding = true; slideTimer = 0.75; }
+                    }
+                }
+            }, { passive: true });
+
+            const mobileControlButtons = document.querySelectorAll('#mobile-controls [data-touch-action]');
+            mobileControlButtons.forEach(button => {
+                button.addEventListener('pointerdown', event => {
+                    if (gameState !== GAME_STATES.PLAYING) return;
+                    event.preventDefault();
+                    audioFX.init();
+                    button.classList.add('is-pressed');
+                    if (event.isTrusted && typeof button.setPointerCapture === 'function') {
+                        try { button.setPointerCapture(event.pointerId); } catch (error) {
+                            console.warn('Could not capture touch control pointer:', error);
+                        }
+                    }
+                    const action = button.dataset.touchAction;
+                    if (action === 'left' && currentLane > 0) {
+                        currentLane--; targetX = LANES[currentLane]; audioFX.playLaneClick();
+                    } else if (action === 'right' && currentLane < LANES.length - 1) {
+                        currentLane++; targetX = LANES[currentLane]; audioFX.playLaneClick();
+                    } else if (action === 'jump' && isGrounded && !isSliding) {
+                        velY = JUMP_FORCE; isGrounded = false;
+                    } else if (action === 'slide' && isGrounded && !isSliding) {
+                        isSliding = true; slideTimer = 0.75;
+                    } else if (action === 'boost') {
+                        keyState.MobileBoost = true;
+                    }
+                });
+                const releaseTouchControl = () => {
+                    button.classList.remove('is-pressed');
+                    if (button.dataset.touchAction === 'boost') keyState.MobileBoost = false;
+                };
+                button.addEventListener('pointerup', releaseTouchControl);
+                button.addEventListener('pointercancel', releaseTouchControl);
+                button.addEventListener('lostpointercapture', releaseTouchControl);
+            });
+
+            // UI Buttons
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            document.getElementById('choose-mobile').addEventListener('click', () => chooseDeviceMode('mobile'));
+            document.getElementById('choose-desktop').addEventListener('click', () => chooseDeviceMode('desktop'));
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+            document.getElementById('pause-btn').addEventListener('click', pauseGame);
+            document.getElementById('resume-btn').addEventListener('click', resumeGame);
+            document.getElementById('pause-restart-btn').addEventListener('click', restartGame);
+            document.getElementById('main-menu-btn').addEventListener('click', returnToMainMenu);
+            document.getElementById('menu-fullscreen-btn').addEventListener('click', toggleFullscreen);
+            document.getElementById('hud-fullscreen-btn').addEventListener('click', toggleFullscreen);
+            document.getElementById('help-toggle').addEventListener('click', event => {
+                const button = event.currentTarget;
+                const helpPanel = document.getElementById('menu-help');
+                const expanded = button.getAttribute('aria-expanded') === 'true';
+                button.setAttribute('aria-expanded', String(!expanded));
+                helpPanel.hidden = expanded;
+                document.getElementById('help-chevron').classList.toggle('fa-chevron-up', !expanded);
+                document.getElementById('help-chevron').classList.toggle('fa-chevron-down', expanded);
+            });
+            document.addEventListener('fullscreenchange', updateFullscreenButtons);
+            document.addEventListener('webkitfullscreenchange', updateFullscreenButtons);
+            document.addEventListener('mozfullscreenchange', updateFullscreenButtons);
+            document.addEventListener('msfullscreenchange', updateFullscreenButtons);
+
+            document.getElementById('upgrade-btn').addEventListener('click', () => {
+                document.getElementById('upgrades-modal').classList.remove('hidden');
+            });
+            document.getElementById('close-upgrades').addEventListener('click', () => {
+                document.getElementById('upgrades-modal').classList.add('hidden');
+            });
+
+            document.getElementById('settings-btn').addEventListener('click', () => {
+                document.getElementById('settings-modal').classList.remove('hidden');
+            });
+            document.getElementById('close-settings').addEventListener('click', () => {
+                document.getElementById('settings-modal').classList.add('hidden');
+            });
+
+            // Settings Controls
+            const softSlider = document.getElementById('softness-slider');
+            softSlider.value = GameSave.data.softness;
+            document.getElementById('softness-val-text').textContent = GameSave.data.softness;
+            softSlider.addEventListener('input', e => {
+                GameSave.data.softness = parseFloat(e.target.value);
+                document.getElementById('softness-val-text').textContent = e.target.value;
+                GameSave.save();
+            });
+
+            document.getElementById('bloom-toggle').addEventListener('change', e => {
+                GameSave.data.bloom = e.target.checked;
+                bloomPass.enabled = e.target.checked;
+                GameSave.save();
+            });
+
+            document.getElementById('shadows-toggle').addEventListener('change', e => {
+                GameSave.data.shadows = e.target.checked;
+                renderer.shadowMap.enabled = e.target.checked;
+                GameSave.save();
+            });
+
+            document.getElementById('godrays-toggle').addEventListener('change', e => {
+                GameSave.data.godRays = e.target.checked;
+                godRaysPass.enabled = deviceMode === 'desktop' && e.target.checked;
+                GameSave.save();
+            });
+
+            document.getElementById('audio-toggle').addEventListener('change', e => {
+                GameSave.data.audio = e.target.checked;
+                if (GameSave.data.audio && isRunning) {
+                    audioFX.init();
+                    audioFX.startMusic();
+                    if (isBoosting) audioFX.startBoostRumble();
+                } else {
+                    audioFX.stopMusic();
+                    audioFX.stopBoostRumble();
+                }
+                GameSave.save();
+            });
+
+            document.getElementById('buy-boost-upgrade').addEventListener('click', () => {
+                if (GameSave.data.gears >= 10 && GameSave.data.boostLvl < 5) {
+                    GameSave.data.gears -= 10; GameSave.data.boostLvl++; GameSave.save(); updateUIState();
+                }
+            });
+            document.getElementById('buy-magnet-upgrade').addEventListener('click', () => {
+                if (GameSave.data.gears >= 15 && GameSave.data.magnetLvl < 5) {
+                    GameSave.data.gears -= 15; GameSave.data.magnetLvl++; GameSave.save(); updateUIState();
+                }
+            });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function transitionGameState(nextState) {
+            if (!Object.values(GAME_STATES).includes(nextState)) {
+                throw new Error(`Unknown game state: ${nextState}`);
+            }
+            if (nextState !== gameState && !GAME_STATE_TRANSITIONS[gameState].includes(nextState)) {
+                throw new Error(`Invalid game state transition: ${gameState} -> ${nextState}`);
+            }
+            gameState = nextState;
+            isRunning = nextState === GAME_STATES.PLAYING;
+            if (!isRunning) {
+                Object.keys(keyState).forEach(key => { keyState[key] = false; });
+                document.querySelectorAll('#mobile-controls .is-pressed').forEach(button => button.classList.remove('is-pressed'));
+            }
+            document.getElementById('device-screen').classList.toggle('is-hidden', nextState !== GAME_STATES.DEVICE_SELECT);
+            document.getElementById('device-screen').setAttribute('aria-hidden', String(nextState !== GAME_STATES.DEVICE_SELECT));
+            document.getElementById('start-screen').classList.toggle('is-hidden', nextState !== GAME_STATES.MAIN_MENU);
+            document.getElementById('pause-screen').classList.toggle('is-hidden', nextState !== GAME_STATES.PAUSED);
+            document.getElementById('pause-screen').setAttribute('aria-hidden', String(nextState !== GAME_STATES.PAUSED));
+            document.getElementById('gameover-screen').classList.toggle('is-hidden', nextState !== GAME_STATES.GAME_OVER);
+            document.getElementById('gameover-screen').setAttribute('aria-hidden', String(nextState !== GAME_STATES.GAME_OVER));
+            document.getElementById('hud').classList.toggle('hidden', nextState !== GAME_STATES.PLAYING && nextState !== GAME_STATES.PAUSED);
+            document.getElementById('game-controls').classList.toggle('hidden', nextState !== GAME_STATES.PLAYING);
+            document.getElementById('mobile-controls').classList.toggle('hidden', deviceMode !== 'mobile' || nextState !== GAME_STATES.PLAYING);
+        }
+
+        function announceStatus(message) {
+            const status = document.getElementById('ui-status');
+            if (!status) {
+                console.warn('UI status region is unavailable:', message);
+                return;
+            }
+            status.textContent = message;
+            status.classList.remove('is-hidden');
+            window.clearTimeout(status.hideTimer);
+            status.hideTimer = window.setTimeout(() => status.classList.add('is-hidden'), 2600);
+        }
+
+        function isFullscreenActive() {
+            return Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        }
+
+        function updateFullscreenButtons() {
+            const active = isFullscreenActive();
+            ['menu-fullscreen-btn', 'hud-fullscreen-btn'].forEach(id => {
+                const button = document.getElementById(id);
+                if (!button) return;
+                button.innerHTML = `<i class="fa-solid ${active ? 'fa-compress' : 'fa-expand'}" aria-hidden="true"></i>`;
+                button.setAttribute('aria-label', active ? 'Vollbild beenden' : 'Vollbild aktivieren');
+                button.title = active ? 'Vollbild beenden' : 'Vollbild';
+            });
+        }
+
+        async function toggleFullscreen() {
+            try {
+                if (isFullscreenActive()) {
+                    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                    if (!exit) throw new Error('Fullscreen exit is not supported');
+                    await Promise.resolve(exit.call(document));
+                } else {
+                    const root = document.documentElement;
+                    const request = root.requestFullscreen || root.webkitRequestFullscreen || root.mozRequestFullScreen || root.msRequestFullscreen;
+                    if (!request) throw new Error('Fullscreen is not supported by this browser');
+                    await Promise.resolve(request.call(root));
+                }
+                updateFullscreenButtons();
+            } catch (error) {
+                console.warn('Fullscreen request failed:', error);
+                announceStatus('Vollbild konnte nicht aktiviert werden. Bitte Browser-Berechtigungen prüfen.');
+            }
+        }
+
+        function updateUIState() {
+            document.getElementById('start-highscore-text').textContent = `${GameSave.data.highscore} m`;
+            document.getElementById('start-gears-text').textContent = GameSave.data.gears;
+            document.getElementById('highscore-hud-text').textContent = `${GameSave.data.highscore} m`;
+            
+            document.getElementById('boost-lvl-text').textContent = `Lvl ${GameSave.data.boostLvl} / 5`;
+            document.getElementById('magnet-lvl-text').textContent = `Lvl ${GameSave.data.magnetLvl} / 5`;
+        }
+
+        function updateHUD() {
+            document.getElementById('score-text').textContent = `${score} m`;
+            document.getElementById('gears-text').textContent = sessionGears;
+            document.getElementById('boost-bar').style.width = `${boostGauge}%`;
+            document.getElementById('boost-text').textContent = `${Math.floor(boostGauge)}%`;
+            document.getElementById('pressure-gauge').classList.toggle('pressure-low', boostGauge < 24);
+            const comboText = document.getElementById('combo-text');
+            comboText.textContent = `COMBO x${Math.max(1, comboCount)}`;
+            comboText.classList.toggle('combo-lit', comboCount > 1);
+        }
+
+        function startGame() {
+            audioFX.init();
+            clearLevelEntities();
+            resetGame();
+            transitionGameState(GAME_STATES.PLAYING);
+            audioFX.startMusic();
+        }
+
+        function pauseGame() {
+            if (gameState !== GAME_STATES.PLAYING) return;
+            Object.keys(keyState).forEach(key => { keyState[key] = false; });
+            audioFX.stopBoostRumble();
+            audioFX.stopMusic();
+            isBoosting = false;
+            boostWasActive = false;
+            audioFX.setMusicBoost(false);
+            transitionGameState(GAME_STATES.PAUSED);
+            document.getElementById('resume-btn').focus();
+        }
+
+        function resumeGame() {
+            if (gameState !== GAME_STATES.PAUSED) return;
+            audioFX.init();
+            transitionGameState(GAME_STATES.PLAYING);
+            audioFX.startMusic();
+            document.getElementById('pause-btn').focus();
+        }
+
+        function disposeSceneObject(root) {
+            const geometries = new Set();
+            const materials = new Set();
+            root.traverse(object => {
+                if (object.geometry) geometries.add(object.geometry);
+                if (Array.isArray(object.material)) object.material.forEach(material => materials.add(material));
+                else if (object.material) materials.add(object.material);
+            });
+            geometries.forEach(geometry => geometry.dispose());
+            materials.forEach(material => material.dispose());
+        }
+
+        function clearCollectiblesForDimensionShift() {
+            collectibles.forEach(item => {
+                scene.remove(item);
+                disposeSceneObject(item);
+            });
+            collectibles = [];
+        }
+
+        function clearLevelEntities() {
+            [...obstacles, ...collectibles].forEach(object => {
+                scene.remove(object);
+                disposeSceneObject(object);
+            });
+            obstacles = [];
+            collectibles = [];
+        }
+
+        function returnToMainMenu() {
+            if (gameState !== GAME_STATES.PAUSED) return;
+            audioFX.stopBoostRumble();
+            audioFX.stopMusic();
+            isBoosting = false;
+            boostWasActive = false;
+            cancelDimensionTransition();
+            clearLevelEntities();
+            resetGame();
+            transitionGameState(GAME_STATES.MAIN_MENU);
+            document.getElementById('start-btn').focus();
+        }
+
+        function triggerGameOver(impactPosition) {
+            if (gameState !== GAME_STATES.PLAYING) return;
+            isRunning = false;
+            const crashPosition = impactPosition || new THREE.Vector3(vehicleGroup.position.x, 1.6 + posY, vehicleGroup.position.z);
+            spawnCollisionBurst(crashPosition.x, crashPosition.y, crashPosition.z);
+            audioFX.stopBoostRumble();
+            audioFX.stopMusic();
+            boostWasActive = false;
+            audioFX.playCrash();
+            GameSave.data.gears += sessionGears;
+            if (score > GameSave.data.highscore) GameSave.data.highscore = score;
+            GameSave.save();
+
+            document.getElementById('final-score').textContent = `${score} m`;
+            document.getElementById('final-gears').textContent = sessionGears;
+            document.getElementById('final-highscore').textContent = `${GameSave.data.highscore} m`;
+
+            transitionGameState(GAME_STATES.GAME_OVER);
+            updateUIState();
+        }
+
+        function restartGame() {
+            if (gameState !== GAME_STATES.GAME_OVER && gameState !== GAME_STATES.PAUSED) return;
+            audioFX.init();
+            cancelDimensionTransition();
+            clearLevelEntities();
+            resetGame();
+            transitionGameState(GAME_STATES.PLAYING);
+            audioFX.startMusic();
+        }
+
+        function resetGame() {
+            if (currentDimension !== 0) applyVictorianWorld();
+            score = 0; distanceTravelled = 0; distanceAccumulator = 0; sessionGears = 0; shieldCharges = 0; currentSpeed = BASE_SPEED;
+            nextDimensionShiftDistance = DIMENSION_SHIFT_INTERVAL;
+            dimensionWorldApplied = false;
+            currentLane = 1; targetX = LANES[1]; posX = 0; posY = 0; velY = 0;
+            isGrounded = true; isSliding = false; boostGauge = 100;
+            comboCount = 0; comboTimer = 0; spawnDistanceCounter = 0; cameraShakeIntensity = 0;
+            cameraShakeOffset.set(0, 0, 0);
+            cameraShakeVelocity.set(0, 0, 0);
+            impactDistortion = 0;
+            shockwaveRings.forEach(ring => { ring.visible = false; ring.userData.life = 0; });
+            impactParticles.forEach(particle => { particle.visible = false; particle.userData.life = 0; });
+            steamParticles.forEach(particle => { particle.visible = false; particle.userData.life = 0; });
+            sparkParticles.forEach(particle => { particle.visible = false; particle.userData.life = 0; });
+            dustParticles.forEach(particle => { particle.visible = false; particle.userData.life = 0; });
+            isBoosting = false; boostWasActive = false;
+            audioFX.setMusicBoost(false);
+            document.getElementById('floating-text-layer').replaceChildren();
+            vehicleGroup.position.set(0,0,0);
+            cameraTargetPos.set(0, 4.3, 9.5);
+            if (heatHaze) heatHaze.visible = true;
+            updateHUD();
+        }
+
+        function cancelDimensionTransition() {
+            if (!isDimensionTransition) return;
+            isDimensionTransition = false;
+            dimensionTransitionElapsed = 0;
+            if (dimensionRift) dimensionRift.visible = false;
+            document.getElementById('dimension-glitch').classList.remove('is-active');
+            document.getElementById('dimension-title').classList.remove('is-visible');
+            if (heatDistortionPass) heatDistortionPass.uniforms.uAnomaly.value = 0;
+            if (dimensionRiftMaterial) dimensionRiftMaterial.uniforms.uOpacity.value = 0;
+            if (camera) {
+                cameraTargetPos.set(posX * 0.45, 4.3 + posY * 0.22, 9.5);
+                camera.position.copy(cameraTargetPos);
+                camera.fov = getBaseCameraFov();
+                camera.updateProjectionMatrix();
+                camera.lookAt(posX * 0.25, 1.4, -6);
+            }
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer || !composer) return;
+            const width = Math.max(1, window.innerWidth);
+            const height = Math.max(1, window.innerHeight);
+            camera.aspect = width / height;
+            camera.fov = getBaseCameraFov() + (isBoosting && isRunning ? 8 : 0);
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            composer.setSize(width, height);
+        }
+
+        window.onload = () => {
+            initEngine();
+            animate();
+        };
+    </script>
+</body>
+</html>
